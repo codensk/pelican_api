@@ -11,7 +11,7 @@ class UserDTO
         public string $name,
         public string $email,
         public ?string $password,
-        public UserRoleEnum $role,
+        public ?UserRoleEnum $role,
     ) {}
 
     public function toArray(): array
@@ -32,7 +32,7 @@ class UserDTO
             name: $data['name'] ?? null,
             email: $data['email'] ?? null,
             password: $data['password'] ?? null,
-            role: is_string(value: $data['role']) ? UserRoleEnum::tryFrom(value: $data['role']) : $data['role'],
+            role: ($data['role'] ?? false) ? (is_string(value: $data['role']) ? UserRoleEnum::tryFrom(value: $data['role']) : $data['role']) : null,
         );
     }
 }

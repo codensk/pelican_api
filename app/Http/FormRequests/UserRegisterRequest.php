@@ -16,7 +16,7 @@ class UserRegisterRequest extends FormRequest
                 'email',
                 Rule::unique('users')->whereNull('deleted_at'),
             ],
-            'password' => 'required|min:5',
+            'password' => 'nullable|min:5',
             'role' => 'required|in:client,user',
         ];
     }
