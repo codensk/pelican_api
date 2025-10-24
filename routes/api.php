@@ -12,6 +12,10 @@ Route::prefix('v1')->group(function () {
         Route::controller(LoginController::class)->group(function () {
             Route::post('/login', 'login')->name('auth.login');
         });
+        Route::controller(ProfileController::class)->group(function () {
+            Route::patch('/directUpdate', 'directUpdate')->name('profile.directUpdate');
+            Route::get('/directProfile', 'directProfile')->name('profile.directProfile');
+        });
     });
 
     Route::middleware('auth:sanctum')->group(function () {

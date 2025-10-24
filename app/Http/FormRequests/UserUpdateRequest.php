@@ -9,12 +9,14 @@ class UserUpdateRequest extends FormRequest
 {
     public function rules(): array
     {
+        $userId = $this->user()->id ?? $this->request->get('userId');
+
         return [
             'name' => 'nullable|min:3',
             'email' => [
                 'nullable',
                 'email',
-                Rule::unique('users')->ignore(id: $this->user()->id)->whereNull('deleted_at'),
+                Rule::unique('users')->ignore(id: $userId)->whereNull('deleted_at'),
             ],
             'password' => 'nullable|min:5',
         ];
