@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\v1\LoginController;
 use App\Http\Controllers\Api\v1\ProfileController;
 use App\Http\Controllers\Api\v1\RegistrationController;
+use App\Http\Controllers\Api\v1\ServiceController;
 
 Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
@@ -23,6 +24,12 @@ Route::prefix('v1')->group(function () {
             Route::controller(ProfileController::class)->group(function () {
                 Route::patch('/', 'profile')->name('profile.update');
             });
+        });
+    });
+
+    Route::prefix('services')->group(function () {
+        Route::controller(ServiceController::class)->group(function () {
+            Route::get('/', 'list')->name('services.list');
         });
     });
 });
