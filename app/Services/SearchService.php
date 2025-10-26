@@ -130,7 +130,7 @@ class SearchService
             throw new ValidationException(message: $json['errors'][0]);
         }
 
-        return array_map(callback: function ($price) {
+        $results = array_map(callback: function ($price) {
             return PriceResultDTO::fromArray([
                 "priceId" => $price['entryId'],
                 "vehicleClassId" => $price['carClassId'],
@@ -141,5 +141,14 @@ class SearchService
                 "currency" => ($price['prices']['fullPrice'] ?? null) ? ($price['prices']['currency'] ?? null) : null,
             ]);
         }, array: $json);
+
+        // Исключаем цены под запрос (в пеликане не нужны)
+        return $this->excludePricesByRequest(prices: $results);
+    }
+
+    private function excludePricesByRequest(array $prices): array {
+        return array_values(array: array_filter(array: $prices, callback: function ($price) {
+            return $price->price > 0;
+        }));
     }
 }
