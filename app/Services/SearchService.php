@@ -17,11 +17,6 @@ use Psr\SimpleCache\InvalidArgumentException;
  */
 class SearchService
 {
-    /**
-     * Эндпоинт запроса цен
-     *
-     * @var string
-     */
     private string $priceEndpoint = 'https://sandbox.busfer.com/api/v1/prices';
     private string $placeEndpoint = 'https://sandbox.busfer.com/api/v1/findPlace';
     private string $clientTokenEndpoint = 'https://release.busfer.com/api/pelican/clientToken';
