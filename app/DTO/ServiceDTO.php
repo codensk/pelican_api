@@ -8,7 +8,7 @@ class ServiceDTO
 {
     public function __construct(
         public int $id,
-        public string $title,
+        public ?string $title,
         public ?string $description,
         public ?float $price,
         public ?string $currency, // валюта стоимости
@@ -35,7 +35,7 @@ class ServiceDTO
     {
         return new self(
             id: $data['id'],
-            title: $data['title'],
+            title: $data['title'] ?? null,
             description: $data['description'] ?? null,
             price: $data['price'] ?? null,
             currency: $data['currency'] ?? null,

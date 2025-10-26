@@ -6,7 +6,7 @@ use App\DTO\PlaceDTO;
 use App\DTO\PlaceRequestDTO;
 use App\DTO\PriceRequestDTO;
 use App\DTO\PriceResultDTO;
-use App\Exceptions\ValidationException;
+use App\Exceptions\CustomValidationException;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
@@ -70,7 +70,7 @@ class SearchService
     /**
      * Ищет место по названию или адресу, возвращает список мест с адресами и координатами
      *
-     * @throws ValidationException|ConnectionException
+     * @throws CustomValidationException|ConnectionException
      */
     public function fetchPlaces(PlaceRequestDTO $placeRequestDTO): array {
         $req = Http::retry(times: 3, sleepMilliseconds: 100, throw: false)
@@ -84,7 +84,7 @@ class SearchService
         $json = $req->json();
 
         if ($json['errors'] ?? false) {
-            throw new ValidationException(message: $json['errors'][0]);
+            throw new CustomValidationException(message: $json['errors'][0]);
         }
 
         return array_map(callback: function ($place) {
@@ -101,7 +101,7 @@ class SearchService
      * Возвращает цены по указанному запросу
      *
      * @throws ConnectionException
-     * @throws ValidationException
+     * @throws CustomValidationException
      */
     public function fetchPrices(PriceRequestDTO $priceRequestDTO): array {
         $pickupAddress = $priceRequestDTO->pickupLocation->address;
@@ -127,7 +127,7 @@ class SearchService
         $json = $req->json();
 
         if ($json['errors'] ?? false) {
-            throw new ValidationException(message: $json['errors'][0]);
+            throw new CustomValidationException(message: $json['errors'][0]);
         }
 
         $results = array_map(callback: function ($price) {

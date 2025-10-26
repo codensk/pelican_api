@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Exceptions\ValidationException;
+use App\Exceptions\CustomValidationException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
 
@@ -15,7 +15,7 @@ class ApiService
         } catch (ConnectionException $exception) {
             Log::error("User ID: {$userId}, error: {$exception->getMessage()}");
             abort(500, 'Ошибка выполнения запроса');
-        } catch (ValidationException $exception) {
+        } catch (CustomValidationException $exception) {
             Log::error("User ID: {$userId}, error: {$exception->getMessage()}");
             abort(400, $exception->getMessage());
         }
