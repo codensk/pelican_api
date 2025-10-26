@@ -10,26 +10,30 @@ class SearchPriceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'pickupLocation' => 'required',
-            'dropoffLocation' => 'required',
+            'pickupLocation.name' => 'required',
+            'dropoffLocation.name' => 'required',
+            'pickupLocation.address' => 'required',
+            'dropoffLocation.address' => 'required',
+            'pickupLocation.lat' => 'required',
+            'dropoffLocation.lat' => 'required',
+            'pickupLocation.lon' => 'required',
+            'dropoffLocation.lon' => 'required',
             'pickupAt' => 'required',
-            'pickupLat' => 'required',
-            'pickupLon' => 'required',
-            'dropoffLat' => 'required',
-            'dropoffLon' => 'required',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'pickupLocation.required' => __('Не указано место подачи'),
-            'dropoffLocation.required' => __('Не указано место назначения'),
+            'pickupLocation.name.required' => __('Не указано название места подачи'),
+            'dropoffLocation.name.required' => __('Не указано название места назначения'),
+            'pickupLocation.address.required' => __('Не указан адрес места подачи'),
+            'dropoffLocation.address.required' => __('Не указан адрес места назначения'),
+            'pickupLocation.lat.required' => __('Не указаны координаты места подачи'),
+            'dropoffLocation.lat.required' => __('Не указаны координаты места назначения'),
+            'pickupLocation.lon.required' => __('Не указаны координаты места подачи'),
+            'dropoffLocation.lon.required' => __('Не указаны координаты места назначения'),
             'pickupAt.required' => __('Не указаны дата и время подачи'),
-            'pickupLat.required' => __('Не указаны координаты точки подачи (lat)'),
-            'pickupLon.required' => __('Не указаны координаты точки подачи (lon)'),
-            'dropoffLat.required' => __('Не указаны координаты точки назначения (lat)'),
-            'dropoffLon.required' => __('Не указаны координаты точки назначения (lon)'),
         ];
     }
 

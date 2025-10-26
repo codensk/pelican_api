@@ -5,6 +5,7 @@ namespace App\Services;
 use App\DTO\PlaceDTO;
 use App\DTO\PlaceRequestDTO;
 use App\DTO\PriceRequestDTO;
+use App\DTO\PriceResultDTO;
 use App\Exceptions\ValidationException;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
@@ -17,10 +18,6 @@ use Psr\SimpleCache\InvalidArgumentException;
  */
 class SearchService
 {
-    private string $priceEndpoint = 'https://sandbox.busfer.com/api/v1/prices';
-    private string $placeEndpoint = 'https://sandbox.busfer.com/api/v1/findPlace';
-    private string $clientTokenEndpoint = 'https://release.busfer.com/api/pelican/clientToken';
-
     /**
      * Получаем токен и contract id необходимые для запросов к букинг апи
      *
@@ -35,9 +32,11 @@ class SearchService
             return Cache::get($cacheKey);
         }
 
+        $endpoint = config("services.booking.endpoints.clientTokenEndpoint");
+
         $req = Http::retry(times: 3, sleepMilliseconds: 100)
             ->timeout(seconds: 60)
-            ->get("{$this->clientTokenEndpoint}?userId={$userId}");
+            ->get("{$endpoint}?userId={$userId}");
 
         $token = null;
 
@@ -78,7 +77,7 @@ class SearchService
             ->timeout(seconds: 60)
             ->withToken(token: $placeRequestDTO->token)
             ->withUrlParameters(parameters: [
-                'endpoint' => $this->placeEndpoint,
+                'endpoint' => config("services.booking.endpoints.placeEndpoint"),
                 'term' => $placeRequestDTO->search,
             ])->get('{+endpoint}?term={term}');
 
@@ -105,18 +104,23 @@ class SearchService
      * @throws ValidationException
      */
     public function fetchPrices(PriceRequestDTO $priceRequestDTO): array {
+        $pickupAddress = $priceRequestDTO->pickupLocation->address;
+        $dropoffAddress = $priceRequestDTO->dropoffLocation->address;
+
         $req = Http::retry(times: 3, sleepMilliseconds: 100, throw: false)
             ->timeout(seconds: 60)
             ->withToken(token: $priceRequestDTO->token)
             ->withUrlParameters(parameters: [
-               'endpoint' => $this->priceEndpoint,
+               'endpoint' => config("services.booking.endpoints.priceEndpoint"),
                'tripTypeId' => 1, // 1 - трансфер, 2 - аренда
                'contractId' => $priceRequestDTO->contractId, // договор
                'pickupAt' => $priceRequestDTO->pickupAt->format("Y-m-d H:i"), // дата/время подачи
-               'pickupLocation' => $priceRequestDTO->pickupLocation, // адрес подачи
-               'pickupLat' => $priceRequestDTO->pickupLat,
-               'pickupLon' => $priceRequestDTO->pickupLon,
-               'dropoffLocation' => $priceRequestDTO->dropoffLocation, // адрес назначения
+               'pickupLocation' => $priceRequestDTO->pickupLocation->name . " ({$pickupAddress})", // адрес подачи
+               'pickupLat' => $priceRequestDTO->pickupLocation->lat,
+               'pickupLon' => $priceRequestDTO->pickupLocation->lon,
+               'dropoffLocation' => $priceRequestDTO->dropoffLocation->name . " ({$dropoffAddress})", // адрес назначения
+               'dropoffLat' => $priceRequestDTO->dropoffLocation->lat,
+               'dropoffLon' => $priceRequestDTO->dropoffLocation->lon,
                'tollRoad' => true, // использовать платные дороги
             ])->get('{+endpoint}?tripTypeId={tripTypeId}&contractId={contractId}&pickupAt={pickupAt}&pickup[place][address]={pickupLocation}&pickup[place][lat]={pickupLat}&pickup[place][lon]={pickupLon}&dropoff[place][address]={dropoffLocation}&dropoff[place][lat]={dropoffLat}&dropoff[place][lon]={dropoffLon}&tollRoad={tollRoad}');
 
@@ -125,7 +129,17 @@ class SearchService
         if ($json['errors'] ?? false) {
             throw new ValidationException(message: $json['errors'][0]);
         }
-dd($json);
-        return [];
+
+        return array_map(callback: function ($price) {
+            return PriceResultDTO::fromArray([
+                "priceId" => $price['entryId'],
+                "vehicleClassId" => $price['carClassId'],
+                "maxPassengers" => $price['maxPassengers'],
+                "distance" => $price['tripDistance'] ?? null,
+                "duration" => $price['tripMinutes'] ?? null,
+                "price" => ($price['prices']['fullPrice'] ?? null) ? (double) $price['prices']['fullPrice'] : null,
+                "currency" => ($price['prices']['fullPrice'] ?? null) ? ($price['prices']['currency'] ?? null) : null,
+            ]);
+        }, array: $json);
     }
 }

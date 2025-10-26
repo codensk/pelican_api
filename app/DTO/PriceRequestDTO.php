@@ -10,13 +10,9 @@ class PriceRequestDTO
     public function __construct(
         public string $token,
         public int $contractId,
-        public string $pickupLocation,
-        public string $dropoffLocation,
-        public Carbon $pickupAt,
-        public float $pickupLat,
-        public float $pickupLon,
-        public float $dropoffLat,
-        public float $dropoffLon,
+        public PlaceDTO $pickupLocation,
+        public PlaceDTO $dropoffLocation,
+        public Carbon $pickupAt
     ) {}
 
     public function toArray(): array
@@ -24,13 +20,9 @@ class PriceRequestDTO
         return [
             'token' => $this->token,
             'contractId' => $this->contractId,
-            'pickupLocation' => $this->pickupLocation,
-            'dropoffLocation' => $this->dropoffLocation,
+            'pickupLocation' => $this->pickupLocation->toArray(),
+            'dropoffLocation' => $this->dropoffLocation->toArray(),
             'pickupAt' => $this->pickupAt->format("Y-m-d H:i"),
-            'pickupLat' => $this->pickupLat,
-            'pickupLon' => $this->pickupLon,
-            'dropoffLat' => $this->dropoffLat,
-            'dropoffLon' => $this->dropoffLon,
         ];
     }
 
@@ -39,13 +31,9 @@ class PriceRequestDTO
         return new self(
             token: $data['token'],
             contractId: $data['contractId'],
-            pickupLocation: $data['pickupLocation'],
-            dropoffLocation: $data['dropoffLocation'],
-            pickupAt: Carbon::parse($data['pickupAt']),
-            pickupLat: $data['pickupLat'],
-            pickupLon: $data['pickupLon'],
-            dropoffLat: $data['dropoffLat'],
-            dropoffLon: $data['dropoffLon'],
+            pickupLocation: is_array($data['pickupLocation']) ? PlaceDTO::fromArray(data: $data['pickupLocation']) : $data['pickupLocation'],
+            dropoffLocation: is_array($data['dropoffLocation']) ? PlaceDTO::fromArray(data: $data['dropoffLocation']) : $data['dropoffLocation'],
+            pickupAt: Carbon::parse($data['pickupAt'])
         );
     }
 }

@@ -39,6 +39,11 @@ return [
         'ip' => '212.20.21.13',
         'defaultClientToken' => env('DEFAULT_CLIENT_TOKEN'),
         'defaultClientContractId' => env('DEFAULT_CLIENT_CONTRACT_ID'),
+        'endpoints' => [
+            'priceEndpoint' => 'https://release.busfer.com/api/v1/prices',
+            'placeEndpoint' => 'https://release.busfer.com/api/v1/findPlace',
+            'clientTokenEndpoint' => 'https://release.busfer.com/api/pelican/clientToken',
+        ]
     ]
 
 ];

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class ApiService
 {
-    public function call(callable $callback, int $userId)
+    public function call(callable $callback, ?int $userId)
     {
         try {
             return $callback();
