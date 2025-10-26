@@ -21,7 +21,7 @@ class LoginController extends Controller
         try {
             $user = $this->userService->getUserByEmailAndPassword(email: $request->email, password: $request->password);
         } catch (Exception $exception) {
-            return ApiResponse::error([$exception->getMessage()], code: 404);
+            abort(code: 404, message: $exception->getMessage());
         }
 
         return ApiResponse::success(data: [

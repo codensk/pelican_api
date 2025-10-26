@@ -24,4 +24,14 @@ readonly class ClientTokenService
             throw new \RuntimeException('Ошибка выполнения запроса');
         }
     }
+
+    public function getClientData(): array
+    {
+        try {
+            return $this->getTokenForCurrentUser();
+        } catch (\RuntimeException $e) {
+            Log::error("Error fetching client token: {$e->getMessage()}");
+            abort(500, 'Ошибка получения токена клиента');
+        }
+    }
 }

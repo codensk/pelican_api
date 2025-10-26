@@ -24,6 +24,7 @@ class SearchService
      */
     private string $priceEndpoint = 'https://sandbox.busfer.com/api/v1/prices';
     private string $placeEndpoint = 'https://sandbox.busfer.com/api/v1/findPlace';
+    private string $clientTokenEndpoint = 'https://release.busfer.com/api/pelican/clientToken';
 
     /**
      * Получаем токен и contract id необходимые для запросов к букинг апи
@@ -33,7 +34,7 @@ class SearchService
      * @throws Exception
      */
     public function fetchClientToken(?int $userId): ?array {
-        $cacheKey = "fetchClientToken.{$userId}";
+        $cacheKey = "fetchClientToken1.{$userId}";
 
         if (Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
@@ -41,7 +42,7 @@ class SearchService
 
         $req = Http::retry(times: 3, sleepMilliseconds: 100)
             ->timeout(seconds: 60)
-            ->get("https://release.busfer.com/api/pelican/clientToken?userId={$userId}");
+            ->get("{$this->clientTokenEndpoint}?userId={$userId}");
 
         $token = null;
 

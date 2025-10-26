@@ -23,7 +23,7 @@ class ProfileController extends Controller
         try {
             $this->userService->update(id: $request->user()->id, data: $request->validated());
         } catch (Exception $exception) {
-            return ApiResponse::error([$exception->getMessage()], code: 500);
+            abort(code: 500, message: $exception->getMessage());
         }
 
         return ApiResponse::success();
@@ -41,7 +41,7 @@ class ProfileController extends Controller
         try {
             $user = $this->userService->getUser(id: $userId);
         } catch (Exception $exception) {
-            return ApiResponse::error([$exception->getMessage()], code: 500);
+            abort(code: 500, message: $exception->getMessage());
         }
 
         return ApiResponse::success($user->makeApiModel());
@@ -58,7 +58,7 @@ class ProfileController extends Controller
         try {
             $this->userService->update(id: $userId, data: $request->validated());
         } catch (Exception $exception) {
-            return ApiResponse::error([$exception->getMessage()], code: 500);
+            abort(code: 500, message: $exception->getMessage());
         }
 
         return ApiResponse::success();
