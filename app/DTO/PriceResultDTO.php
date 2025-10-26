@@ -2,6 +2,8 @@
 
 namespace App\DTO;
 
+use App\Services\Enums\PlaceTypeEnum;
+
 class PriceResultDTO
 {
     public function __construct(
@@ -12,6 +14,8 @@ class PriceResultDTO
         public ?string $duration,
         public ?float $price,
         public ?string $currency, // RUB / USD / EUR
+        public ?PlaceTypeEnum $pickupPlaceType,
+        public ?PlaceTypeEnum $dropoffPlaceType,
     ) {}
 
     public function toArray(): array
@@ -24,6 +28,8 @@ class PriceResultDTO
             'duration' => $this->duration,
             'price' => $this->price,
             'currency' => $this->currency,
+            'pickupPlaceType' => $this->pickupPlaceType->value ?? null,
+            'dropoffPlaceType' => $this->dropoffPlaceType->value ?? null,
         ];
     }
 
@@ -37,6 +43,8 @@ class PriceResultDTO
             duration: $data['duration'],
             price: $data['price'] ?? null,
             currency: $data['currency'] ?? null,
+            pickupPlaceType: ($data['pickupPlaceTypeId'] ?? null) ? PlaceTypeEnum::byId(id: $data['pickupPlaceTypeId'] ?? null) : null,
+            dropoffPlaceType: ($data['dropoffPlaceTypeId'] ?? null) ? PlaceTypeEnum::byId(id: $data['dropoffPlaceTypeId'] ?? null) : null,
         );
     }
 }

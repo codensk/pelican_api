@@ -13,7 +13,7 @@ class ServiceDTO
         public ?float $price,
         public ?string $currency, // валюта стоимости
         public ?bool $isCountable, // можно менять количество
-        public ?int $defaultQuantity, // количество по умолчанию
+        public int $quantity, // количество
         public ?bool $defaultState, // дефолтное состояние услуги (например, какая то услуга должна быть по умолчанию выбрана в UI)
     ) {}
 
@@ -27,7 +27,7 @@ class ServiceDTO
             'currency' => $this->currency,
             'defaultState' => $this->defaultState,
             'isCountable' => $this->isCountable,
-            'defaultQuantity' => $this->defaultQuantity,
+            'quantity' => $this->quantity,
         ];
     }
 
@@ -40,7 +40,7 @@ class ServiceDTO
             price: $data['price'] ?? null,
             currency: $data['currency'] ?? null,
             isCountable: $data['isCountable'] ?? null,
-            defaultQuantity: $data['defaultQuantity'] ?? null,
+            quantity: $data['quantity'] ?? 1,
             defaultState: $data['defaultState'] ?? null,
         );
     }

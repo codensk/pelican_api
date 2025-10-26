@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\v1\BookingController;
 use App\Http\Controllers\Api\v1\LoginController;
 use App\Http\Controllers\Api\v1\ProfileController;
 use App\Http\Controllers\Api\v1\RegistrationController;
@@ -38,6 +39,12 @@ Route::prefix('v1')->group(function () {
         Route::controller(SearchController::class)->group(function () {
             Route::get('/place', 'place')->name('search.place');
             Route::post('/', 'price')->name('search.price');
+        });
+    });
+
+    Route::prefix('booking')->group(function () {
+        Route::controller(BookingController::class)->group(function () {
+            Route::post('/', 'booking')->name('booking');
         });
     });
 });

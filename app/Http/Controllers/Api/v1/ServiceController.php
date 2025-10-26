@@ -26,7 +26,7 @@ class ServiceController extends Controller
                 'currency' => 'RUB',
                 'defaultState' => rand(1, 3) == 1,
                 'isCountable' => rand(1, 3) == 1,
-                'defaultQuantity' => 1,
+                'quantity' => 1,
             ])->toArray();
         }
 

@@ -139,6 +139,8 @@ class SearchService
                 "duration" => $price['tripMinutes'] ?? null,
                 "price" => ($price['prices']['fullPrice'] ?? null) ? (double) $price['prices']['fullPrice'] : null,
                 "currency" => ($price['prices']['fullPrice'] ?? null) ? ($price['prices']['currency'] ?? null) : null,
+                "pickupPlaceTypeId" => $price['pickup']['polygons']['polygonTypeId'] ?? null,
+                "dropoffPlaceTypeId" => $price['dropoff']['polygons']['polygonTypeId'] ?? null,
             ]);
         }, array: $json);
 

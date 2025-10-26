@@ -10,6 +10,7 @@ use App\Http\FormRequests\SearchPriceRequest;
 use App\Services\ApiResponse;
 use App\Services\ApiService;
 use App\Services\ClientTokenService;
+use App\Services\PriceHistoryService;
 use App\Services\SearchService;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,6 +20,7 @@ class SearchController extends Controller
         private readonly ApiService $apiService,
         private readonly ClientTokenService $clientTokenService,
         private readonly SearchService $searchService,
+        private readonly PriceHistoryService $priceHistoryService,
     ) {}
 
     public function place(SearchPlaceRequest $request) {
@@ -40,6 +42,12 @@ class SearchController extends Controller
         $prices = $this->apiService->call(callback: fn() => $this->searchService->fetchPrices(
             PriceRequestDTO::fromArray(data: array_merge($request->validated(), ['token' => $clientData['token'], 'contractId' => $clientData['contractId']]))
         ), userId: Auth::guard('api')->user()->id ?? null);
+
+        // сохраняем цены для временного хранения
+        foreach($prices as $price) {
+            $this->priceHistoryService->savePrice(price: $price);
+        }
+
 
         return ApiResponse::success($prices);
     }

@@ -2,6 +2,7 @@
 
 namespace App\DTO;
 
+use App\Services\Enums\PlaceTypeEnum;
 use App\Services\Enums\UserRoleEnum;
 use Illuminate\Support\Carbon;
 
@@ -12,7 +13,7 @@ class PriceRequestDTO
         public int $contractId,
         public PlaceDTO $pickupLocation,
         public PlaceDTO $dropoffLocation,
-        public Carbon $pickupAt
+        public Carbon $pickupAt,
     ) {}
 
     public function toArray(): array
@@ -33,7 +34,7 @@ class PriceRequestDTO
             contractId: $data['contractId'],
             pickupLocation: is_array($data['pickupLocation']) ? PlaceDTO::fromArray(data: $data['pickupLocation']) : $data['pickupLocation'],
             dropoffLocation: is_array($data['dropoffLocation']) ? PlaceDTO::fromArray(data: $data['dropoffLocation']) : $data['dropoffLocation'],
-            pickupAt: Carbon::parse($data['pickupAt'])
+            pickupAt: Carbon::parse($data['pickupAt']),
         );
     }
 }
