@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\DTO\PlaceDTO;
+use App\DTO\PlaceRequestDTO;
 use App\DTO\PriceRequestDTO;
 use App\Exceptions\ValidationException;
 use Exception;
@@ -21,6 +23,7 @@ class SearchService
      * @var string
      */
     private string $priceEndpoint = 'https://sandbox.busfer.com/api/v1/prices';
+    private string $placeEndpoint = 'https://sandbox.busfer.com/api/v1/findPlace';
 
     /**
      * Получаем токен и contract id необходимые для запросов к букинг апи
@@ -67,6 +70,36 @@ class SearchService
         }
 
         return $returnData;
+    }
+
+    /**
+     * Ищет место по названию или адресу, возвращает список мест с адресами и координатами
+     *
+     * @throws ValidationException|ConnectionException
+     */
+    public function fetchPlaces(PlaceRequestDTO $placeRequestDTO): array {
+        $req = Http::retry(times: 3, sleepMilliseconds: 100, throw: false)
+            ->timeout(seconds: 60)
+            ->withToken(token: $placeRequestDTO->token)
+            ->withUrlParameters(parameters: [
+                'endpoint' => $this->placeEndpoint,
+                'term' => $placeRequestDTO->search,
+            ])->get('{+endpoint}?term={term}');
+
+        $json = $req->json();
+
+        if ($json['errors'] ?? false) {
+            throw new ValidationException(message: $json['errors'][0]);
+        }
+
+        return array_map(callback: function ($place) {
+            return PlaceDTO::fromArray([
+                "name" => $place['name'] ?? null,
+                "address" => $place['address'] ?? null,
+                "lat" => ($place['lat'] ?? null) ? (double) $place['lat'] : null,
+                "lon" => ($place['lon'] ?? null) ? (double) $place['lon'] : null,
+            ]);
+        }, array: $json);
     }
 
     /**
