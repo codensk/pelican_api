@@ -36,7 +36,9 @@ return [
     ],
 
     'booking' => [
-        'ip' => '212.20.21.13'
+        'ip' => '212.20.21.13',
+        'defaultClientToken' => env('DEFAULT_CLIENT_TOKEN'),
+        'defaultClientContractId' => env('DEFAULT_CLIENT_CONTRACT_ID'),
     ]
 
 ];

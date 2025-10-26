@@ -10,11 +10,11 @@ class ServiceDTO
         public int $id,
         public string $title,
         public ?string $description,
-        public float $price,
-        public string $currency, // валюта стоимости
-        public bool $isCountable, // можно менять количество
-        public int $defaultQuantity, // количество по умолчанию
-        public bool $defaultState, // дефолтное состояние услуги (например, какая то услуга должна быть по умолчанию выбрана в UI)
+        public ?float $price,
+        public ?string $currency, // валюта стоимости
+        public ?bool $isCountable, // можно менять количество
+        public ?int $defaultQuantity, // количество по умолчанию
+        public ?bool $defaultState, // дефолтное состояние услуги (например, какая то услуга должна быть по умолчанию выбрана в UI)
     ) {}
 
     public function toArray(): array
@@ -37,11 +37,11 @@ class ServiceDTO
             id: $data['id'],
             title: $data['title'],
             description: $data['description'] ?? null,
-            price: $data['price'],
-            currency: $data['currency'],
-            isCountable: $data['isCountable'],
-            defaultQuantity: $data['defaultQuantity'],
-            defaultState: $data['defaultState'],
+            price: $data['price'] ?? null,
+            currency: $data['currency'] ?? null,
+            isCountable: $data['isCountable'] ?? null,
+            defaultQuantity: $data['defaultQuantity'] ?? null,
+            defaultState: $data['defaultState'] ?? null,
         );
     }
 }
