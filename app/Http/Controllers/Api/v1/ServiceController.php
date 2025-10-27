@@ -2,34 +2,29 @@
 
 namespace App\Http\Controllers\Api\v1;
 
-use App\DTO\ServiceDTO;
 use App\Http\Controllers\Controller;
 use App\Http\FormRequests\ServicesRequest;
 use App\Services\ApiResponse;
+use App\Services\ApiService;
+use App\Services\ClientTokenService;
+use App\Services\ServiceManager;
 use Illuminate\Support\Facades\Auth;
 
 class ServiceController extends Controller
 {
+    public function __construct(
+        private readonly ApiService $apiService,
+        private readonly ClientTokenService $clientTokenService,
+        private readonly ServiceManager $serviceManager,
+    ) {}
+
     public function list(ServicesRequest $request)
     {
-        $user = Auth::guard('api')->user(); // если передан bearer token, то получаем текущего юзера
+        $clientData = $this->clientTokenService->getClientData();
 
-        $mockServices = [];
-        $testPrefix = $user ? "({$user->name})" : "";
+        // поиск мест
+        $services = $this->apiService->call(callback: fn() => $this->serviceManager->fetchServices(token: $clientData['token'], cityId: $request->cityId), userId: Auth::guard('api')->user()->id ?? null);
 
-        for($i = 1; $i <= 5; $i++) {
-            $mockServices[] = ServiceDTO::fromArray(data: [
-                'id' => $i,
-                'title' => "Услуга {$testPrefix} " . $i,
-                'description' => "Описание услуги " . $i,
-                'price' => rand(100, 1800),
-                'currency' => 'RUB',
-                'defaultState' => rand(1, 3) == 1,
-                'isCountable' => rand(1, 3) == 1,
-                'quantity' => 1,
-            ])->toArray();
-        }
-
-        return ApiResponse::success($mockServices);
+        return ApiResponse::success($services);
     }
 }
