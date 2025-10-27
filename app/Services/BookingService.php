@@ -5,10 +5,10 @@ namespace App\Services;
 use App\DTO\BookingRequestDTO;
 use App\Models\Order;
 
-class BookingService
+readonly class BookingService
 {
     public function __construct(
-        private readonly PaymentService $paymentService,
+        private PaymentService $paymentService,
     ) {}
 
     /*
