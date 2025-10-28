@@ -6,11 +6,13 @@ use App\DTO\BookingRequestDTO;
 use App\DTO\OrderDTO;
 use App\DTO\OrderPriceDTO;
 use App\Events\OrderCreatedEvent;
+use App\Events\OrderSendFailedEvent;
 use App\Models\Order;
 use App\Models\PriceHistory;
 use App\Models\Service;
 use App\Services\Enums\TicketTypeEnum;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 readonly class BookingService
@@ -109,5 +111,104 @@ readonly class BookingService
            'tripPrice' => $price['price'],
            'servicePrice' => $servicePrice,
         ]);
+    }
+
+    public function sendOrderToBooking(string $orderId): void {
+        $order = Order::query()->where("order_id", $orderId)->first();
+
+        if (!$order) {
+            event(new OrderSendFailedEvent(orderId: $orderId));
+
+            return;
+        }
+
+        $clientData = $this->clientTokenService->getClientData(setUserId: $order->user_id);
+
+        $orderDto = $order->toDto();
+
+        $req = Http::retry(times: 3, sleepMilliseconds: 100, throw: false)
+            ->timeout(seconds: 60)
+            ->withToken(token: $clientData['token'])
+            ->post(config("services.booking.endpoints.tripEndpoint"), $this->prepareTripsPayload(order: $orderDto, employeeId: $clientData['employeeId']));
+
+        /**
+         * todo:
+         * - отправить письмо что надо оплатить (ссылка на оплату)
+         * - после оплаты отправить письмо что оплачено
+         * - взять ссылку на ваучер
+         * - отправить письмо с ваучером клиенту на email
+         * - отправить в букинг письмо о том, что заказ оформлен
+         * - обработка ивентов по ошибкам
+         * - удалить прайс
+         * - пометить заказ оплаченным
+         * - сохранить ссылку на ваучер
+         *
+         */
+
+        dd($req->body());
+    }
+
+    private function prepareTripsPayload(OrderDTO $order, ?int $employeeId): array {
+        $payload = $order->payload;
+
+        $passengers = [
+            [
+                'name' => $payload['passenger']['firstName'] . ' ' . $payload['passenger']['lastName'],
+                'phone' => $payload['passenger']['phone'],
+                'additionalPhone' => $payload['passenger']['secondaryPhone'],
+                'sms' => false,
+            ]
+        ];
+
+        $pickup = [];
+
+        if ($payload['pickupLocation']['train'] ?? false) {
+            $pickup['railwayDetails'] = [
+                'train' => $payload['pickupLocation']['train']['trainNumber'] ?? null,
+                'wagon' => $payload['pickupLocation']['train']['trainCarriage'] ?? null,
+                'trainDate' => $payload['pickupLocation']['train']['trainDateTime'] ?? null,
+            ];
+        }
+
+        if ($payload['pickupLocation']['flight'] ?? false) {
+            $pickup['airport_details'] = [
+                'flightNumber' => $payload['pickupLocation']['flight']['flightNumber'] ?? null,
+                'flightDate' => $payload['pickupLocation']['flight']['flightDateTime'] ?? null,
+            ];
+        }
+
+        $dropoff = [];
+
+        if ($payload['dropoffLocation']['train'] ?? false) {
+            $dropoff['railwayDetails'] = [
+                'train' => $payload['dropoffLocation']['train']['trainNumber'] ?? null,
+                'wagon' => $payload['dropoffLocation']['train']['trainCarriage'] ?? null,
+                'trainDate' => $payload['dropoffLocation']['train']['trainDateTime'] ?? null,
+            ];
+        }
+
+        if ($payload['dropoffLocation']['flight'] ?? false) {
+            $dropoff['airport_details'] = [
+                'flightNumber' => $payload['dropoffLocation']['flight']['flightNumber'] ?? null,
+                'flightDate' => $payload['dropoffLocation']['flight']['flightDateTime'] ?? null,
+            ];
+        }
+
+        $trips = [
+            [
+                'entryId' => $order->priceId,
+                'clientEmployerId' => $employeeId,
+                'showPriceInVoucher' => false,
+                'lang' => 'ru',
+                'voucherLang' => 'ru',
+                'passengers' => $passengers,
+                'pickup' => $pickup,
+                'dropoff' => $dropoff,
+            ]
+        ];
+
+        return [
+            'trips' => $trips
+        ];
     }
 }

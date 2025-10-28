@@ -26,7 +26,7 @@ class SearchService
      * @throws Exception
      */
     public function fetchClientToken(?int $userId): ?array {
-        $cacheKey = "fetchClientToken3.{$userId}";
+        $cacheKey = "fetchClientToken5.{$userId}";
 
         if (Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
@@ -55,11 +55,13 @@ class SearchService
         $clientToken = ($json['token'] ?? null) ?? config("services.booking.defaultClientToken");
         $contractId = ($json['contractId'] ?? null) ?? config("services.booking.defaultClientContractId");
         $refundableTicketPercent = $json['refundableTicketPercent'] ?? 0;
+        $employeeId = $json['employeeId'] ?? null;
 
         $returnData = $clientToken && $contractId ? [
             'token' => $clientToken,
             'contractId' => $contractId,
             'refundableTicketPercent' => (float) $refundableTicketPercent,
+            'employeeId' => $employeeId,
         ] : null;
 
         if (($json['token'] ?? null) && ($json['contractId'] ?? null)) {
@@ -124,7 +126,8 @@ class SearchService
                'dropoffLat' => $priceRequestDTO->dropoffLocation->lat,
                'dropoffLon' => $priceRequestDTO->dropoffLocation->lon,
                'tollRoad' => true, // использовать платные дороги
-            ])->get('{+endpoint}?tripTypeId={tripTypeId}&contractId={contractId}&pickupAt={pickupAt}&pickup[place][address]={pickupLocation}&pickup[place][lat]={pickupLat}&pickup[place][lon]={pickupLon}&dropoff[place][address]={dropoffLocation}&dropoff[place][lat]={dropoffLat}&dropoff[place][lon]={dropoffLon}&tollRoad={tollRoad}');
+            ])->get('{+endpoint}?tripTypeId={tripTypeId}&contractId={contractId}&pickupAt={pickupAt}&pickup[place][lat]={pickupLat}&pickup[place][lon]={pickupLon}&dropoff[place][lat]={dropoffLat}&dropoff[place][lon]={dropoffLon}&tollRoad={tollRoad}');
+//            ])->get('{+endpoint}?tripTypeId={tripTypeId}&contractId={contractId}&pickupAt={pickupAt}&pickup[place][address]={pickupLocation}&pickup[place][lat]={pickupLat}&pickup[place][lon]={pickupLon}&dropoff[place][address]={dropoffLocation}&dropoff[place][lat]={dropoffLat}&dropoff[place][lon]={dropoffLon}&tollRoad={tollRoad}');
 
         $json = $req->json();
 

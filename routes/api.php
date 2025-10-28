@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\v1\BookingController;
 use App\Http\Controllers\Api\v1\LoginController;
+use App\Http\Controllers\Api\v1\PaymentController;
 use App\Http\Controllers\Api\v1\ProfileController;
 use App\Http\Controllers\Api\v1\RegistrationController;
 use App\Http\Controllers\Api\v1\SearchController;
@@ -45,6 +46,13 @@ Route::prefix('v1')->group(function () {
     Route::prefix('booking')->group(function () {
         Route::controller(BookingController::class)->group(function () {
             Route::post('/', 'booking')->name('booking');
+        });
+    });
+
+    Route::prefix('payment')->group(function () {
+        Route::controller(PaymentController::class)->group(function () {
+            Route::get('/success', 'success')->name('success');
+            Route::get('/failed', 'failed')->name('success');
         });
     });
 });
