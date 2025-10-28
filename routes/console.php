@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+// удаляем истекшие токены
+Schedule::command('sanctum:prune-expired --hours=24')->name(description: "Clean expired tokens")->everyFiveMinutes()->withoutOverlapping();
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+// удаляем истекшие прайсы
+Schedule::call(function (\App\Services\PriceHistoryService $priceHistoryService) {
+    $priceHistoryService->deleteExpiredPrices();
+})->name(description: "Clean expired prices")->everySixHours()->withoutOverlapping();
