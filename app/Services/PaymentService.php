@@ -3,10 +3,23 @@
 namespace App\Services;
 
 use App\DTO\BookingRequestDTO;
+use App\DTO\OrderDTO;
+use App\Models\Order;
 
 class PaymentService
 {
-    public function createPayment(BookingRequestDTO $bookingRequestDTO): string {
-        return "";
+    public function createPayment(OrderDTO $order): array {
+        $paymentLink = "https://ya.ru";
+
+        $this->savePaymentLink(order: $order, paymentLink: $paymentLink);
+
+        return [
+            'paymentLink' => $paymentLink,
+            'expiresAt' => $order->expiresAt->toIso8601String(),
+        ];
+    }
+
+    private function savePaymentLink(OrderDTO $order, ?string $paymentLink): void {
+        Order::query()->where("order_id", $order->orderId)->update(['payment_link' => $paymentLink]);
     }
 }

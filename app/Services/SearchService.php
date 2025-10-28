@@ -134,7 +134,7 @@ class SearchService
 
         $results = array_map(callback: function ($price) use ($refundableTicketPercent) {
             $ticketPrice = ($price['prices']['fullPrice'] ?? null) ? (double) $price['prices']['fullPrice'] : null;
-            $priceRefundableTicket = $ticketPrice * (1 + $refundableTicketPercent / 100);
+            $priceRefundableTicket = $this->calcRefundableTicketPrice(ticketPrice: $ticketPrice ?? 0, refundableTicketPercent: $refundableTicketPercent);
 
             return PriceResultDTO::fromArray([
                 "priceId" => $price['entryId'],
@@ -144,6 +144,7 @@ class SearchService
                 "duration" => $price['tripMinutes'] ?? null,
                 "price" => $ticketPrice,
                 "priceRefundableTicket" => number_format($priceRefundableTicket, 2, ".", ""),
+                "refundableTicketPercent" => $refundableTicketPercent,
                 "currency" => ($price['prices']['fullPrice'] ?? null) ? ($price['prices']['currency'] ?? null) : null,
                 "pickupPlaceTypeId" => $price['pickup']['polygons']['polygonTypeId'] ?? null,
                 "dropoffPlaceTypeId" => $price['dropoff']['polygons']['polygonTypeId'] ?? null,
@@ -152,6 +153,10 @@ class SearchService
 
         // Исключаем цены под запрос (в пеликане не нужны)
         return $this->excludePricesByRequest(prices: $results);
+    }
+
+    public function calcRefundableTicketPrice(float $ticketPrice, float $refundableTicketPercent = 0): float {
+        return $ticketPrice * (1 + $refundableTicketPercent / 100);
     }
 
     private function excludePricesByRequest(array $prices): array {

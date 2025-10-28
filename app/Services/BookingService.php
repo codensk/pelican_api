@@ -9,24 +9,27 @@ use App\Events\OrderCreatedEvent;
 use App\Models\Order;
 use App\Models\PriceHistory;
 use App\Models\Service;
+use App\Services\Enums\TicketTypeEnum;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 readonly class BookingService
 {
     public function __construct(
+        private ClientTokenService $clientTokenService,
+        private SearchService $searchService,
         private PaymentService $paymentService,
     ) {}
 
     /**
      * Метод сохраняет заказ в базе и возвращает ссылку на оплату
      */
-    public function processOrder(array $data): string {
+    public function processOrder(array $data): array {
         $bookingRequestDTO = BookingRequestDTO::fromArray(data: $data);
 
-        $this->saveOrder(bookingRequestDTO: $bookingRequestDTO, userId: Auth::guard('api')->user()->id ?? null);
+        $order = $this->saveOrder(bookingRequestDTO: $bookingRequestDTO, userId: Auth::guard('api')->user()->id ?? null);
 
-        return $this->paymentService->createPayment(bookingRequestDTO: $bookingRequestDTO);
+        return $this->paymentService->createPayment(order: $order);
     }
 
 
@@ -38,7 +41,8 @@ readonly class BookingService
      * @return OrderDTO
      */
     public function saveOrder(BookingRequestDTO $bookingRequestDTO, ?int $userId = null): OrderDTO {
-        $orderPrice = $this->calcPrice(bookingRequestDTO: $bookingRequestDTO);
+        $clientData = $this->clientTokenService->getClientData();
+        $orderPrice = $this->calcPrice(bookingRequestDTO: $bookingRequestDTO, refundableTicketPercent: $clientData['refundableTicketPercent']);
 
         $orderId = Str::random(length: 10);
 
@@ -46,11 +50,15 @@ readonly class BookingService
             'user_id' => $userId,
             'price_id' => $bookingRequestDTO->priceId,
             'full_price' => $orderPrice->fullPrice,
+            'full_price_refundable' => $orderPrice->fullPriceRefundable,
             'order_price' => $orderPrice->tripPrice,
             'services_price' => $orderPrice->servicePrice,
             'order_id' => "PN-{$orderId}",
             'payload' => $bookingRequestDTO->toArray(),
             'is_paid' => false,
+            'expires_at' => now()->addHours(6),
+            'is_refundable' => $bookingRequestDTO->ticketType == TicketTypeEnum::Refundable,
+            'refundable_ticket_percent' => $clientData['refundableTicketPercent'],
         ]);
 
         $orderDto = OrderDTO::fromArray(data: [
@@ -58,7 +66,10 @@ readonly class BookingService
             'priceId' => $order->price_id,
             'orderId' => $order->order_id,
             'payload' => $order->payload ?? [],
+            'expiresAt' => $order->expires_at,
             'isPaid' => $order->is_paid,
+            'isRefundable' => $order->is_refundable,
+            'refundableTicketPercent' => $order->refundable_ticket_percent,
             'prices' => $orderPrice->toArray(),
         ]);
 
@@ -67,7 +78,7 @@ readonly class BookingService
         return $orderDto;
     }
 
-    public function calcPrice(BookingRequestDTO $bookingRequestDTO): OrderPriceDTO {
+    public function calcPrice(BookingRequestDTO $bookingRequestDTO, ?float $refundableTicketPercent = 0): OrderPriceDTO {
         $priceRow = PriceHistory::query()->where('price_id', $bookingRequestDTO->priceId)->first();
 
         if (!$priceRow) {
@@ -88,8 +99,13 @@ readonly class BookingService
             $servicePrice += $service->price;
         }
 
+        $fullPrice = $price['price'] + $servicePrice;
+
+        $priceRefundableTicket = $this->searchService->calcRefundableTicketPrice(ticketPrice: $fullPrice, refundableTicketPercent: $refundableTicketPercent);
+
         return OrderPriceDTO::fromArray(data: [
-           'fullPrice' => $price['price'] + $servicePrice,
+           'fullPrice' => $fullPrice,
+           'fullPriceRefundable' => $priceRefundableTicket,
            'tripPrice' => $price['price'],
            'servicePrice' => $servicePrice,
         ]);

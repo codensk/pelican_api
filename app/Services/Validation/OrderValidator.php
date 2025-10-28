@@ -36,27 +36,27 @@ class OrderValidator
             });
         }
 
-        $price = $priceRow->price;
+        $price = $priceRow->price ?? null;
 
-        if ($price['pickupPlaceType'] === 'airport' && (!($data['pickupLocation']['flight']['flightNumber'] ?? false) || !($data['pickupLocation']['flight']['flightDateTime'] ?? false))) {
+        if ($price && $price['pickupPlaceType'] === 'airport' && (!($data['pickupLocation']['flight']['flightNumber'] ?? false) || !($data['pickupLocation']['flight']['flightDateTime'] ?? false))) {
             $validator->after(function ($v) {
                 $v->errors()->add('pickupLocation', 'Укажите номер и дату/время рейса');
             });
         }
 
-        if ($price['dropoffPlaceType'] === 'airport' && (!($data['dropoffLocation']['flight']['flightNumber'] ?? false) || !($data['dropoffLocation']['flight']['flightDateTime'] ?? false))) {
+        if ($price && $price['dropoffPlaceType'] === 'airport' && (!($data['dropoffLocation']['flight']['flightNumber'] ?? false) || !($data['dropoffLocation']['flight']['flightDateTime'] ?? false))) {
             $validator->after(function ($v) {
                 $v->errors()->add('dropoffLocation', 'Укажите номер и дату/время рейса');
             });
         }
 
-        if ($price['pickupPlaceType'] === 'railway_station' && (!($data['pickupLocation']['train']['trainNumber'] ?? false) || !($data['pickupLocation']['train']['trainDateTime'] ?? false))) {
+        if ($price && $price['pickupPlaceType'] === 'railway_station' && (!($data['pickupLocation']['train']['trainNumber'] ?? false) || !($data['pickupLocation']['train']['trainDateTime'] ?? false))) {
             $validator->after(function ($v) {
                 $v->errors()->add('pickupLocation', 'Укажите номер и дату/время поезда');
             });
         }
 
-        if ($price['dropoffPlaceType'] === 'railway_station' && (!($data['dropoffLocation']['train']['trainNumber'] ?? false) || !($data['dropoffLocation']['train']['trainDateTime'] ?? false))) {
+        if ($price && $price['dropoffPlaceType'] === 'railway_station' && (!($data['dropoffLocation']['train']['trainNumber'] ?? false) || !($data['dropoffLocation']['train']['trainDateTime'] ?? false))) {
             $validator->after(function ($v) {
                 $v->errors()->add('dropoffLocation', 'Укажите номер и дату/время поезда');
             });

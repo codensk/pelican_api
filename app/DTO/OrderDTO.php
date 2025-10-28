@@ -3,6 +3,7 @@
 namespace App\DTO;
 
 use App\Services\Enums\TicketTypeEnum;
+use Carbon\Carbon;
 
 class OrderDTO
 {
@@ -12,6 +13,7 @@ class OrderDTO
         public string $orderId,
         public float $refundableTicketPercent,
         public array $payload,
+        public Carbon $expiresAt,
         public bool $isPaid,
         public bool $isRefundable,
         public OrderPriceDTO $prices,
@@ -25,6 +27,7 @@ class OrderDTO
             'orderId' => $this->orderId,
             'payload' => $this->payload,
             'isPaid' => $this->isPaid,
+            'expiresAt' => $this->expiresAt,
             'refundableTicketPercent' => $this->refundableTicketPercent,
             'isRefundable' => $this->isRefundable,
             'prices' => $this->prices->toArray(),
@@ -39,6 +42,7 @@ class OrderDTO
             orderId: $data['orderId'],
             refundableTicketPercent: $data['refundableTicketPercent'],
             payload: $data['payload'],
+            expiresAt: ($data['expiresAt'] ?? null) ? Carbon::parse($data['expiresAt']) : null,
             isPaid: $data['isPaid'],
             isRefundable: $data['isRefundable'],
             prices: OrderPriceDTO::fromArray($data['prices']),
