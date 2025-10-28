@@ -10,8 +10,10 @@ class OrderDTO
         public ?int $userId,
         public string $priceId,
         public string $orderId,
+        public float $refundableTicketPercent,
         public array $payload,
         public bool $isPaid,
+        public bool $isRefundable,
         public OrderPriceDTO $prices,
     ) {}
 
@@ -23,6 +25,8 @@ class OrderDTO
             'orderId' => $this->orderId,
             'payload' => $this->payload,
             'isPaid' => $this->isPaid,
+            'refundableTicketPercent' => $this->refundableTicketPercent,
+            'isRefundable' => $this->isRefundable,
             'prices' => $this->prices->toArray(),
         ];
     }
@@ -33,8 +37,10 @@ class OrderDTO
             userId: $data['userId'],
             priceId: $data['priceId'],
             orderId: $data['orderId'],
+            refundableTicketPercent: $data['refundableTicketPercent'],
             payload: $data['payload'],
             isPaid: $data['isPaid'],
+            isRefundable: $data['isRefundable'],
             prices: OrderPriceDTO::fromArray($data['prices']),
         );
     }

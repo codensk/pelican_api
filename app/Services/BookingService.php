@@ -24,7 +24,7 @@ readonly class BookingService
     public function processOrder(array $data): string {
         $bookingRequestDTO = BookingRequestDTO::fromArray(data: $data);
 
-        $r = $this->saveOrder(bookingRequestDTO: $bookingRequestDTO, userId: Auth::guard('api')->user()->id ?? null);
+        $this->saveOrder(bookingRequestDTO: $bookingRequestDTO, userId: Auth::guard('api')->user()->id ?? null);
 
         return $this->paymentService->createPayment(bookingRequestDTO: $bookingRequestDTO);
     }

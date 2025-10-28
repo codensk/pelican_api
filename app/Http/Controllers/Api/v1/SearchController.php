@@ -40,14 +40,14 @@ class SearchController extends Controller
 
         // поиск цен
         $prices = $this->apiService->call(callback: fn() => $this->searchService->fetchPrices(
-            PriceRequestDTO::fromArray(data: array_merge($request->validated(), ['token' => $clientData['token'], 'contractId' => $clientData['contractId']]))
+            PriceRequestDTO::fromArray(data: array_merge($request->validated(), ['token' => $clientData['token'], 'contractId' => $clientData['contractId']])),
+            refundableTicketPercent: $clientData['refundableTicketPercent'] ?? 0
         ), userId: Auth::guard('api')->user()->id ?? null);
 
         // сохраняем цены для временного хранения
         foreach($prices as $price) {
             $this->priceHistoryService->savePrice(price: $price);
         }
-
 
         return ApiResponse::success($prices);
     }

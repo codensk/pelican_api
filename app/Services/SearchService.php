@@ -26,7 +26,7 @@ class SearchService
      * @throws Exception
      */
     public function fetchClientToken(?int $userId): ?array {
-        $cacheKey = "fetchClientToken1.{$userId}";
+        $cacheKey = "fetchClientToken3.{$userId}";
 
         if (Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
@@ -54,10 +54,12 @@ class SearchService
         // если нет токена, то возвращаем дефолтный токен и договор (физ лица бронируют от имени отдельного клиента в букинге)
         $clientToken = ($json['token'] ?? null) ?? config("services.booking.defaultClientToken");
         $contractId = ($json['contractId'] ?? null) ?? config("services.booking.defaultClientContractId");
+        $refundableTicketPercent = $json['refundableTicketPercent'] ?? 0;
 
         $returnData = $clientToken && $contractId ? [
             'token' => $clientToken,
             'contractId' => $contractId,
+            'refundableTicketPercent' => (float) $refundableTicketPercent,
         ] : null;
 
         if (($json['token'] ?? null) && ($json['contractId'] ?? null)) {
@@ -103,7 +105,7 @@ class SearchService
      * @throws ConnectionException
      * @throws CustomValidationException
      */
-    public function fetchPrices(PriceRequestDTO $priceRequestDTO): array {
+    public function fetchPrices(PriceRequestDTO $priceRequestDTO, ?float $refundableTicketPercent = 0): array {
         $pickupAddress = $priceRequestDTO->pickupLocation->address;
         $dropoffAddress = $priceRequestDTO->dropoffLocation->address;
 
@@ -130,14 +132,18 @@ class SearchService
             throw new CustomValidationException(message: $json['errors'][0]);
         }
 
-        $results = array_map(callback: function ($price) {
+        $results = array_map(callback: function ($price) use ($refundableTicketPercent) {
+            $ticketPrice = ($price['prices']['fullPrice'] ?? null) ? (double) $price['prices']['fullPrice'] : null;
+            $priceRefundableTicket = $ticketPrice * (1 + $refundableTicketPercent / 100);
+
             return PriceResultDTO::fromArray([
                 "priceId" => $price['entryId'],
                 "vehicleClassId" => $price['carClassId'],
                 "maxPassengers" => $price['maxPassengers'],
                 "distance" => $price['tripDistance'] ?? null,
                 "duration" => $price['tripMinutes'] ?? null,
-                "price" => ($price['prices']['fullPrice'] ?? null) ? (double) $price['prices']['fullPrice'] : null,
+                "price" => $ticketPrice,
+                "priceRefundableTicket" => number_format($priceRefundableTicket, 2, ".", ""),
                 "currency" => ($price['prices']['fullPrice'] ?? null) ? ($price['prices']['currency'] ?? null) : null,
                 "pickupPlaceTypeId" => $price['pickup']['polygons']['polygonTypeId'] ?? null,
                 "dropoffPlaceTypeId" => $price['dropoff']['polygons']['polygonTypeId'] ?? null,
