@@ -27,7 +27,7 @@ class PaymentController extends Controller
 
     public function failed(Request $request)
     {
-        $testOrderId = "PN-HIS49M5V9I";
+        $testOrderId = "PN-U0tOUL3hyW";
 
         event(new OrderUnsuccessfulPaidEvent(orderId: $testOrderId));
     }
