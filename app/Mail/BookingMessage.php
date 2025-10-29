@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\DTO\OrderDTO;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,20 +11,23 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class NotificationOnSuccessPayment extends Mailable
+class BookingMessage extends Mailable
 {
     use Queueable, SerializesModels;
 
     public string $messageSubject;
-    public string $orderId;
+    public string $messageText;
+    public array $orderData;
+    public array $orderDetails;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(string $messageSubject, string $orderId)
+    public function __construct(string $messageSubject, string $messageText, OrderDTO $orderDTO)
     {
         $this->messageSubject = $messageSubject;
-        $this->orderId = $orderId;
+        $this->messageText = $messageText;
+        $this->orderData = $orderDTO->toArray();
     }
 
     /**
@@ -42,7 +46,7 @@ class NotificationOnSuccessPayment extends Mailable
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.success_payment',
+            markdown: 'emails.booking_order_message',
         );
     }
 

@@ -46,7 +46,7 @@ class SearchController extends Controller
 
         // сохраняем цены для временного хранения
         foreach($prices as $price) {
-            $this->priceHistoryService->savePrice(price: $price);
+            $this->priceHistoryService->savePrice(price: $price, payload: $request->toArray());
         }
 
         return ApiResponse::success($prices);

@@ -13,13 +13,14 @@ class Order extends Model
         'user_id', 'notification_email', 'price_id', 'full_price',
         'order_price', 'services_price', 'order_id', 'payment_link',
         'is_paid', 'payload', 'full_price_refundable', 'is_refundable',
-        'refundable_ticket_percent', 'expires_at'
+        'refundable_ticket_percent', 'expires_at', 'price_payload'
     ];
 
     protected $casts = [
         'is_refundable' => 'boolean',
         'is_paid' => 'boolean',
         'payload' => 'array',
+        'price_payload' => 'array',
         'expires_at' => 'timestamp',
     ];
 
@@ -34,6 +35,7 @@ class Order extends Model
             'priceId' => $this->price_id,
             'orderId' => $this->order_id,
             'payload' => $this->payload,
+            'pricePayload' => $this->price_payload ?? [],
             'isPaid' => $this->is_paid,
             'paymentLink' => $this->payment_link,
             'expiresAt' => Carbon::parse($this->expires_at),

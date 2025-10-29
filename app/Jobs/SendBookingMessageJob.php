@@ -14,19 +14,21 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class SendNotificationOnSuccessPaymentJob implements ShouldQueue
+class SendBookingMessageJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
     public string $email;
-    public OrderDTO $orderDTO;
+    public string $messageText;
+    public array $orderDetails;
     public MailService $mailService;
 
-    public function __construct(string $email, OrderDTO $orderDTO)
+    public function __construct(string $email, string $messageText, array $orderDetails)
     {
         $this->email = $email;
-        $this->orderDTO = $orderDTO;
+        $this->messageText = $messageText;
+        $this->orderDetails = $orderDetails;
         $this->mailService = app(MailService::class);
     }
 
@@ -40,7 +42,7 @@ class SendNotificationOnSuccessPaymentJob implements ShouldQueue
             $this->mailService::sendNotificationOnSuccessPayment(
                 to: $this->email,
                 subject: "💸 Заказ успешно оплачен",
-                orderId: $this->orderDTO->orderId,
+                orderId: $this->orderDetails['orderId'],
             );
         } catch (Exception $exception) {
             $this->release(10);

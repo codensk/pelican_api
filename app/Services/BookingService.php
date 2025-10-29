@@ -5,6 +5,8 @@ namespace App\Services;
 use App\DTO\BookingRequestDTO;
 use App\DTO\OrderDTO;
 use App\DTO\OrderPriceDTO;
+use App\Events\OrderBookingFailedEvent;
+use App\Events\OrderBookingSuccessEvent;
 use App\Events\OrderCreatedEvent;
 use App\Events\OrderSendFailedEvent;
 use App\Models\Order;
@@ -21,6 +23,7 @@ readonly class BookingService
     public function __construct(
         private ClientTokenService $clientTokenService,
         private SearchService $searchService,
+        private PriceHistoryService $priceHistoryService,
         private PaymentService $paymentService,
     ) {}
 
@@ -46,6 +49,7 @@ readonly class BookingService
     public function saveOrder(BookingRequestDTO $bookingRequestDTO, ?int $userId = null): OrderDTO {
         $clientData = $this->clientTokenService->getClientData();
         $orderPrice = $this->calcPrice(bookingRequestDTO: $bookingRequestDTO, refundableTicketPercent: $clientData['refundableTicketPercent']);
+        $priceHistoryRow = $this->priceHistoryService->fetchById(priceId: $bookingRequestDTO->priceId);
 
         $orderId = Str::random(length: 10);
         $payload = $bookingRequestDTO->toArray();
@@ -60,6 +64,7 @@ readonly class BookingService
             'services_price' => $orderPrice->servicePrice,
             'order_id' => "PN-{$orderId}",
             'payload' => $payload,
+            'price_payload' => $priceHistoryRow->payload ?? null,
             'is_paid' => false,
             'expires_at' => now()->addHours(6),
             'is_refundable' => $bookingRequestDTO->ticketType == TicketTypeEnum::Refundable,
@@ -72,6 +77,7 @@ readonly class BookingService
             'priceId' => $order->price_id,
             'orderId' => $order->order_id,
             'payload' => $order->payload ?? [],
+            'pricePayload' => $priceHistoryRow->payload ?? null,
             'expiresAt' => $order->expires_at,
             'isPaid' => $order->is_paid,
             'isRefundable' => $order->is_refundable,
@@ -135,10 +141,23 @@ readonly class BookingService
             ->withToken(token: $clientData['token'])
             ->post(config("services.booking.endpoints.tripEndpoint"), $this->prepareTripsPayload(order: $orderDto, employeeId: $clientData['employeeId']));
 
+        $json = $req->json();
+
+        if (!($json[0]['tripId'] ?? false)) {
+            // заказ не оформился
+
+            event(new OrderBookingFailedEvent(orderDTO: $orderDto, reason: json_encode(value: $json, flags: JSON_UNESCAPED_UNICODE)));
+
+            return;
+        }
+
+        // заказ успешно оформлен
+        event(new OrderBookingSuccessEvent(orderDTO: $orderDto));
+
         /**
          * todo:
          * + отправить письмо что надо оплатить (ссылка на оплату)
-         * - после оплаты отправить письмо что оплачено
+         * + после оплаты отправить письмо что оплачено
          * - взять ссылку на ваучер
          * - отправить письмо с ваучером клиенту на email
          * - отправить в букинг письмо о том, что заказ оформлен
@@ -148,8 +167,6 @@ readonly class BookingService
          * - сохранить ссылку на ваучер
          *
          */
-
-        dd($req->body());
     }
 
     private function prepareTripsPayload(OrderDTO $order, ?int $employeeId): array {

@@ -1,7 +1,9 @@
 <x-mail::message>
 # Здравствуйте!
 
-Ваш заказ {{ $orderId }} успешно оплачен.
+Заказ {{ $orderData['orderId'] }}.
+
+{{ $messageText }}
 
 С уважением,<br/>
 {{ config('app.name') }}
