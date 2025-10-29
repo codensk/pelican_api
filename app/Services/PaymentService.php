@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\DTO\BookingRequestDTO;
 use App\DTO\OrderDTO;
+use App\Events\PaymentLinkCreatedEvent;
 use App\Models\Order;
 
 class PaymentService
@@ -12,6 +13,10 @@ class PaymentService
         $paymentLink = "https://ya.ru";
 
         $this->savePaymentLink(order: $order, paymentLink: $paymentLink);
+
+        $order->paymentLink = $paymentLink;
+
+        event(new PaymentLinkCreatedEvent(orderDTO: $order));
 
         return [
             'paymentLink' => $paymentLink,

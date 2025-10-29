@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\OrderCreatedEvent;
+use App\Jobs\SendPaymentLinkOnOrderCreatedJob;
 
 class OrderCreatedListener
 {
@@ -10,6 +11,5 @@ class OrderCreatedListener
 
     public function handle(OrderCreatedEvent $event): void
     {
-
     }
 }

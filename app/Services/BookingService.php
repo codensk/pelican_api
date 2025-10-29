@@ -10,6 +10,7 @@ use App\Events\OrderSendFailedEvent;
 use App\Models\Order;
 use App\Models\PriceHistory;
 use App\Models\Service;
+use App\Models\User;
 use App\Services\Enums\TicketTypeEnum;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -47,16 +48,18 @@ readonly class BookingService
         $orderPrice = $this->calcPrice(bookingRequestDTO: $bookingRequestDTO, refundableTicketPercent: $clientData['refundableTicketPercent']);
 
         $orderId = Str::random(length: 10);
+        $payload = $bookingRequestDTO->toArray();
 
         $order = Order::query()->create([
             'user_id' => $userId,
+            'notification_email' => $this->getNotificationEmail(userId: $userId, orderPayload: $payload),
             'price_id' => $bookingRequestDTO->priceId,
             'full_price' => $orderPrice->fullPrice,
             'full_price_refundable' => $orderPrice->fullPriceRefundable,
             'order_price' => $orderPrice->tripPrice,
             'services_price' => $orderPrice->servicePrice,
             'order_id' => "PN-{$orderId}",
-            'payload' => $bookingRequestDTO->toArray(),
+            'payload' => $payload,
             'is_paid' => false,
             'expires_at' => now()->addHours(6),
             'is_refundable' => $bookingRequestDTO->ticketType == TicketTypeEnum::Refundable,
@@ -65,6 +68,7 @@ readonly class BookingService
 
         $orderDto = OrderDTO::fromArray(data: [
             'userId' => $order->user_id,
+            'notificationEmail' => $order->notification_email,
             'priceId' => $order->price_id,
             'orderId' => $order->order_id,
             'payload' => $order->payload ?? [],
@@ -133,7 +137,7 @@ readonly class BookingService
 
         /**
          * todo:
-         * - отправить письмо что надо оплатить (ссылка на оплату)
+         * + отправить письмо что надо оплатить (ссылка на оплату)
          * - после оплаты отправить письмо что оплачено
          * - взять ссылку на ваучер
          * - отправить письмо с ваучером клиенту на email
@@ -210,5 +214,28 @@ readonly class BookingService
         return [
             'trips' => $trips
         ];
+    }
+
+    /**
+     * Возвращает e-mail для отправки уведомлений, ссылок на оплату
+     *
+     * @param int|null $userId
+     * @param array $orderPayload
+     * @return string|null
+     */
+    private function getNotificationEmail(?int $userId, array $orderPayload): ?string {
+        if ($userId) {
+            $user = User::query()->where("id", $userId)->first();
+
+            if ($user->email ?? false) {
+                return $user->email;
+            }
+        }
+
+        if ($orderPayload['passenger']['email'] ?? false) {
+            return $orderPayload['passenger']['email'];
+        }
+
+        return null;
     }
 }
