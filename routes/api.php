@@ -15,6 +15,7 @@ Route::prefix('v1')->group(function () {
         });
         Route::controller(LoginController::class)->group(function () {
             Route::post('/login', 'login')->name('auth.login');
+            Route::post('/logout', 'logout')->name('auth.logout');
         });
         Route::controller(ProfileController::class)->group(function () {
             Route::patch('/directUpdate', 'directUpdate')->name('profile.directUpdate');

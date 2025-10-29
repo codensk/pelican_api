@@ -11,12 +11,15 @@ use App\Services\UserService;
 use Auth;
 use Exception;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\Request;
 
 class LoginController extends Controller
 {
     public function __construct(
         private readonly UserService $userService,
-    ) {}
+    )
+    {
+    }
 
     public function login(UserLoginRequest $request)
     {
@@ -35,5 +38,19 @@ class LoginController extends Controller
         throw new HttpResponseException(response()->json([
             'message' => __('Неверный email или пароль'),
         ], 404));
+    }
+
+    public function logout(Request $request)
+    {
+        $user =  Auth::guard('api')->user();
+
+        if ($user) {
+            Auth::guard('web')->logout();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        return ApiResponse::success();
     }
 }
