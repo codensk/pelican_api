@@ -26,10 +26,10 @@ class SearchService
      * @throws Exception
      */
     public function fetchClientToken(?int $userId): ?array {
-        $cacheKey = "fetchClientToken5.{$userId}";
+        $cacheKey = "fetchClientToken.{$userId}";
 
         if (Cache::has($cacheKey)) {
-            return Cache::get($cacheKey);
+          //  return Cache::get($cacheKey);
         }
 
         $endpoint = config("services.booking.endpoints.clientTokenEndpoint");

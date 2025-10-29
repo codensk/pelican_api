@@ -22,10 +22,10 @@ Route::prefix('v1')->group(function () {
         });
     });
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum'])->group(function () {
         Route::prefix('profile')->group(function () {
             Route::controller(ProfileController::class)->group(function () {
-                Route::patch('/', 'profile')->name('profile.update');
+                Route::post('/', 'profile')->name('profile.update');
             });
         });
     });

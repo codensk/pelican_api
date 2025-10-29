@@ -8,7 +8,9 @@ use App\Http\FormRequests\UserLoginRequest;
 use App\Http\FormRequests\UserRegisterRequest;
 use App\Services\ApiResponse;
 use App\Services\UserService;
+use Auth;
 use Exception;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class LoginController extends Controller
 {
@@ -18,15 +20,20 @@ class LoginController extends Controller
 
     public function login(UserLoginRequest $request)
     {
-        try {
-            $user = $this->userService->getUserByEmailAndPassword(email: $request->email, password: $request->password);
-        } catch (Exception $exception) {
-            abort(code: 404, message: $exception->getMessage());
+        if (Auth::attempt($request->validated(), remember: true)) {
+            $request->session()->regenerate();
+
+            return ApiResponse::success();
         }
 
-        return ApiResponse::success(data: [
-            'token' => $user->createToken('pelican_api')->plainTextToken,
-            'id' => $user->id
-        ]);
+//        try {
+//            $this->userService->getUserByEmailAndPassword(email: $request->email, password: $request->password);
+//        } catch (Exception $exception) {
+//            abort(code: 404, message: $exception->getMessage());
+//        }
+
+        throw new HttpResponseException(response()->json([
+            'message' => __('Неверный email или пароль'),
+        ], 404));
     }
 }
