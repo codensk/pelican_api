@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\v1\BookingController;
 use App\Http\Controllers\Api\v1\LoginController;
+use App\Http\Controllers\Api\v1\PaymentController;
 use App\Http\Controllers\Api\v1\ProfileController;
 use App\Http\Controllers\Api\v1\RegistrationController;
 use App\Http\Controllers\Api\v1\SearchController;
@@ -14,6 +15,7 @@ Route::prefix('v1')->group(function () {
         });
         Route::controller(LoginController::class)->group(function () {
             Route::post('/login', 'login')->name('auth.login');
+            Route::post('/logout', 'logout')->name('auth.logout');
         });
         Route::controller(ProfileController::class)->group(function () {
             Route::patch('/directUpdate', 'directUpdate')->name('profile.directUpdate');
@@ -21,10 +23,10 @@ Route::prefix('v1')->group(function () {
         });
     });
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum'])->group(function () {
         Route::prefix('profile')->group(function () {
             Route::controller(ProfileController::class)->group(function () {
-                Route::patch('/', 'profile')->name('profile.update');
+                Route::post('/', 'profile')->name('profile.update');
             });
         });
     });
@@ -45,6 +47,13 @@ Route::prefix('v1')->group(function () {
     Route::prefix('booking')->group(function () {
         Route::controller(BookingController::class)->group(function () {
             Route::post('/', 'booking')->name('booking');
+        });
+    });
+
+    Route::prefix('payment')->group(function () {
+        Route::controller(PaymentController::class)->group(function () {
+            Route::get('/success', 'success')->name('success');
+            Route::get('/failed', 'failed')->name('failed');
         });
     });
 });

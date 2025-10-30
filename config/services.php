@@ -39,11 +39,14 @@ return [
         'ip' => '212.20.21.13',
         'defaultClientToken' => env('DEFAULT_CLIENT_TOKEN'),
         'defaultClientContractId' => env('DEFAULT_CLIENT_CONTRACT_ID'),
+        'defaultClientEmployeeId' => env('DEFAULT_CLIENT_EMPLOYEE_ID'),
+        'notificationEmail' => env('NOTIFICATION_EMAIL'),
         'endpoints' => [
             'priceEndpoint' => 'https://release.busfer.com/api/v1/prices',
             'placeEndpoint' => 'https://release.busfer.com/api/v1/findPlace',
             'servicesEndpoint' => 'https://release.busfer.com/api/pelican/services',
             'clientTokenEndpoint' => 'https://release.busfer.com/api/pelican/clientToken',
+            'tripEndpoint' => 'https://release.busfer.com/api/v1/trips',
         ]
     ]
 

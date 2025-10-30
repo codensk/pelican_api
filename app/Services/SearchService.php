@@ -26,10 +26,10 @@ class SearchService
      * @throws Exception
      */
     public function fetchClientToken(?int $userId): ?array {
-        $cacheKey = "fetchClientToken3.{$userId}";
+        $cacheKey = "fetchClientToken.{$userId}";
 
         if (Cache::has($cacheKey)) {
-            return Cache::get($cacheKey);
+          //  return Cache::get($cacheKey);
         }
 
         $endpoint = config("services.booking.endpoints.clientTokenEndpoint");
@@ -55,11 +55,13 @@ class SearchService
         $clientToken = ($json['token'] ?? null) ?? config("services.booking.defaultClientToken");
         $contractId = ($json['contractId'] ?? null) ?? config("services.booking.defaultClientContractId");
         $refundableTicketPercent = $json['refundableTicketPercent'] ?? 0;
+        $employeeId = $json['employeeId'] ?? config("services.booking.defaultClientEmployeeId");
 
         $returnData = $clientToken && $contractId ? [
             'token' => $clientToken,
             'contractId' => $contractId,
             'refundableTicketPercent' => (float) $refundableTicketPercent,
+            'employeeId' => $employeeId,
         ] : null;
 
         if (($json['token'] ?? null) && ($json['contractId'] ?? null)) {
@@ -109,22 +111,25 @@ class SearchService
         $pickupAddress = $priceRequestDTO->pickupLocation->address;
         $dropoffAddress = $priceRequestDTO->dropoffLocation->address;
 
+        $payload = [
+            'endpoint' => config("services.booking.endpoints.priceEndpoint"),
+            'tripTypeId' => 1, // 1 - трансфер, 2 - аренда
+            'contractId' => $priceRequestDTO->contractId, // договор
+            'pickupAt' => $priceRequestDTO->pickupAt->format("Y-m-d H:i"), // дата/время подачи
+            'pickupLocation' => $priceRequestDTO->pickupLocation->name . " ({$pickupAddress})", // адрес подачи
+            'pickupLat' => $priceRequestDTO->pickupLocation->lat,
+            'pickupLon' => $priceRequestDTO->pickupLocation->lon,
+            'dropoffLocation' => $priceRequestDTO->dropoffLocation->name . " ({$dropoffAddress})", // адрес назначения
+            'dropoffLat' => $priceRequestDTO->dropoffLocation->lat,
+            'dropoffLon' => $priceRequestDTO->dropoffLocation->lon,
+            'tollRoad' => true, // использовать платные дороги
+        ];
+
         $req = Http::retry(times: 3, sleepMilliseconds: 100, throw: false)
             ->timeout(seconds: 60)
             ->withToken(token: $priceRequestDTO->token)
-            ->withUrlParameters(parameters: [
-               'endpoint' => config("services.booking.endpoints.priceEndpoint"),
-               'tripTypeId' => 1, // 1 - трансфер, 2 - аренда
-               'contractId' => $priceRequestDTO->contractId, // договор
-               'pickupAt' => $priceRequestDTO->pickupAt->format("Y-m-d H:i"), // дата/время подачи
-               'pickupLocation' => $priceRequestDTO->pickupLocation->name . " ({$pickupAddress})", // адрес подачи
-               'pickupLat' => $priceRequestDTO->pickupLocation->lat,
-               'pickupLon' => $priceRequestDTO->pickupLocation->lon,
-               'dropoffLocation' => $priceRequestDTO->dropoffLocation->name . " ({$dropoffAddress})", // адрес назначения
-               'dropoffLat' => $priceRequestDTO->dropoffLocation->lat,
-               'dropoffLon' => $priceRequestDTO->dropoffLocation->lon,
-               'tollRoad' => true, // использовать платные дороги
-            ])->get('{+endpoint}?tripTypeId={tripTypeId}&contractId={contractId}&pickupAt={pickupAt}&pickup[place][address]={pickupLocation}&pickup[place][lat]={pickupLat}&pickup[place][lon]={pickupLon}&dropoff[place][address]={dropoffLocation}&dropoff[place][lat]={dropoffLat}&dropoff[place][lon]={dropoffLon}&tollRoad={tollRoad}');
+            ->withUrlParameters(parameters: $payload)->get('{+endpoint}?tripTypeId={tripTypeId}&contractId={contractId}&pickupAt={pickupAt}&pickup[place][lat]={pickupLat}&pickup[place][lon]={pickupLon}&dropoff[place][lat]={dropoffLat}&dropoff[place][lon]={dropoffLon}&tollRoad={tollRoad}');
+//            ])->get('{+endpoint}?tripTypeId={tripTypeId}&contractId={contractId}&pickupAt={pickupAt}&pickup[place][address]={pickupLocation}&pickup[place][lat]={pickupLat}&pickup[place][lon]={pickupLon}&dropoff[place][address]={dropoffLocation}&dropoff[place][lat]={dropoffLat}&dropoff[place][lon]={dropoffLon}&tollRoad={tollRoad}');
 
         $json = $req->json();
 
@@ -132,7 +137,7 @@ class SearchService
             throw new CustomValidationException(message: $json['errors'][0]);
         }
 
-        $results = array_map(callback: function ($price) use ($refundableTicketPercent) {
+        $results = array_map(callback: function ($price) use ($refundableTicketPercent, $payload) {
             $ticketPrice = ($price['prices']['fullPrice'] ?? null) ? (double) $price['prices']['fullPrice'] : null;
             $priceRefundableTicket = $this->calcRefundableTicketPrice(ticketPrice: $ticketPrice ?? 0, refundableTicketPercent: $refundableTicketPercent);
 

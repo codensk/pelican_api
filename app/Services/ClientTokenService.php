@@ -12,10 +12,11 @@ readonly class ClientTokenService
     public function __construct(private SearchService $searchService) {}
 
     // получаем токен необходимый для запросов к букинг апи
-    public function getTokenForCurrentUser(): array
+    // $setUserId - устанавливаем принудительно userId (например, для вебхуков эквайринга) когда токен не известен
+    public function getTokenForCurrentUser(?int $setUserId = null): array
     {
         $user = Auth::guard('api')->user();
-        $userId = $user->id ?? null;
+        $userId = $setUserId ?? ($user->id ?? null);
 
         try {
             return $this->searchService->fetchClientToken(userId: $userId);
@@ -25,10 +26,10 @@ readonly class ClientTokenService
         }
     }
 
-    public function getClientData(): array
+    public function getClientData(?int $setUserId = null): array
     {
         try {
-            return $this->getTokenForCurrentUser();
+            return $this->getTokenForCurrentUser(setUserId: $setUserId);
         } catch (\RuntimeException $e) {
             Log::error("Error fetching client token: {$e->getMessage()}");
             abort(500, 'Ошибка получения токена клиента');
