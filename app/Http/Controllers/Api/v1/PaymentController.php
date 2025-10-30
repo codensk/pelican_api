@@ -12,23 +12,26 @@ use Illuminate\Http\Request;
 class PaymentController extends Controller
 {
     public function __construct(
-        private readonly PaymentService $paymentService,
         private readonly BookingService $bookingService,
     ) {}
 
     public function success(Request $request)
     {
-        $testOrderId = "PN-AcotmAr9cx";
+        $testOrderId = "PN-3010202519";
 
         event(new OrderSuccessPaidEvent(orderId: $testOrderId));
 
         $this->bookingService->sendOrderToBooking(orderId: $testOrderId);
+
+        return "ok";
     }
 
     public function failed(Request $request)
     {
-        $testOrderId = "PN-AcotmAr9cx";
+        $testOrderId = "PN-3010202519";
 
         event(new OrderUnsuccessfulPaidEvent(orderId: $testOrderId));
+
+        return "ok";
     }
 }
