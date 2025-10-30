@@ -7,6 +7,7 @@ use App\Events\OrderSuccessPaidEvent;
 use App\Jobs\SendBookingMessageJob;
 use App\Jobs\SendNotificationOnSuccessPaymentJob;
 use App\Models\Order;
+use App\Services\BookingService;
 use App\Services\MailService;
 use App\Services\PaymentService;
 
@@ -14,6 +15,7 @@ readonly class OrderSuccessPaidListener
 {
     public function __construct(
         private PaymentService $paymentService,
+        private BookingService $bookingService,
     ) {}
 
     public function handle(OrderSuccessPaidEvent $event): void
@@ -32,5 +34,8 @@ readonly class OrderSuccessPaidListener
 
         // Помечаем заказ оплаченным
         $order->markAsPaid();
+
+        // создаем и отправляем ваучер
+        $this->bookingService->sendVoucher(order: $order->toDto());
     }
 }

@@ -9,6 +9,8 @@ use App\Events\OrderBookingFailedEvent;
 use App\Events\OrderBookingSuccessEvent;
 use App\Events\OrderCreatedEvent;
 use App\Events\OrderSendFailedEvent;
+use App\Jobs\SendVoucherJob;
+use App\Mail\SendVoucher;
 use App\Models\Order;
 use App\Models\PriceHistory;
 use App\Models\Service;
@@ -18,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Storage;
 
 readonly class BookingService
 {
@@ -27,6 +30,8 @@ readonly class BookingService
         private PriceHistoryService $priceHistoryService,
         private PaymentService $paymentService,
         private ServiceManager $serviceManager,
+        private VoucherGeneratorService $voucherGeneratorService,
+        private MailService $mailService,
     ) {}
 
     /**
@@ -53,13 +58,14 @@ readonly class BookingService
         $orderPrice = $this->calcPrice(bookingRequestDTO: $bookingRequestDTO, refundableTicketPercent: $clientData['refundableTicketPercent']);
         $priceHistoryRow = $this->priceHistoryService->fetchById(priceId: $bookingRequestDTO->priceId);
 
-        $orderId = Str::random(length: 10);
+        $orderId = date("dmY") . Order::query()->count() + 1;
         $payload = $bookingRequestDTO->toArray();
 
         $order = Order::query()->create([
             'user_id' => $userId,
             'notification_email' => $this->getNotificationEmail(userId: $userId, orderPayload: $payload),
             'price_id' => $bookingRequestDTO->priceId,
+            'vehicle_class_id' => $priceHistoryRow->price['vehicleClassId'] ?? null,
             'full_price' => $orderPrice->fullPrice,
             'full_price_refundable' => $orderPrice->fullPriceRefundable,
             'order_price' => $orderPrice->tripPrice,
@@ -77,6 +83,7 @@ readonly class BookingService
             'userId' => $order->user_id,
             'notificationEmail' => $order->notification_email,
             'priceId' => $order->price_id,
+            'vehicleClassId' => $order->vehicle_class_id,
             'orderId' => $order->order_id,
             'payload' => $order->payload ?? [],
             'pricePayload' => $priceHistoryRow->payload ?? null,
@@ -85,6 +92,7 @@ readonly class BookingService
             'isRefundable' => $order->is_refundable,
             'refundableTicketPercent' => $order->refundable_ticket_percent,
             'prices' => $orderPrice->toArray(),
+            'createdAt' => $order->created_at,
         ]);
 
         event(new OrderCreatedEvent(orderDTO: $orderDto));
@@ -164,21 +172,10 @@ readonly class BookingService
 
         // заказ успешно оформлен
         event(new OrderBookingSuccessEvent(orderDTO: $orderDto));
+    }
 
-        /**
-         * todo:
-         * + отправить письмо что надо оплатить (ссылка на оплату)
-         * + после оплаты отправить письмо что оплачено
-         * - взять ссылку на ваучер
-         * - отправить письмо с ваучером клиенту на email
-         * + отправить в букинг письмо о том, что заказ оформлен
-         * + обработка ивентов по ошибкам
-         * + пометить заказ оплаченным
-         * - сохранить ссылку на ваучер
-         * + передача услуг в комменте
-         * + проверить примечание
-         *
-         */
+    public function sendVoucher(OrderDTO $order): void {
+        dispatch(job: new SendVoucherJob(email: $order->notificationEmail, orderDTO: $order));
     }
 
     private function prepareTripsPayload(OrderDTO $order, ?int $employeeId): array {
