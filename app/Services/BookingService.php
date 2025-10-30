@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\Enums\TicketTypeEnum;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 readonly class BookingService
@@ -25,6 +26,7 @@ readonly class BookingService
         private SearchService $searchService,
         private PriceHistoryService $priceHistoryService,
         private PaymentService $paymentService,
+        private ServiceManager $serviceManager,
     ) {}
 
     /**
@@ -136,10 +138,19 @@ readonly class BookingService
 
         $orderDto = $order->toDto();
 
-        $req = Http::retry(times: 3, sleepMilliseconds: 100, throw: false)
-            ->timeout(seconds: 60)
-            ->withToken(token: $clientData['token'])
-            ->post(config("services.booking.endpoints.tripEndpoint"), $this->prepareTripsPayload(order: $orderDto, employeeId: $clientData['employeeId']));
+        try {
+            $req = Http::retry(times: 3, sleepMilliseconds: 100, throw: false)
+                ->timeout(seconds: 60)
+                ->withToken(token: $clientData['token'])
+                ->post(config("services.booking.endpoints.tripEndpoint"), $this->prepareTripsPayload(order: $orderDto, employeeId: $clientData['employeeId']));
+        } catch (\Exception $exception) {
+            Log::error("OrderID: {$orderId}");
+            Log::error($exception->getMessage());
+
+            event(new OrderBookingFailedEvent(orderDTO: $orderDto, reason: $exception->getMessage()));
+
+            return;
+        }
 
         $json = $req->json();
 
@@ -162,11 +173,10 @@ readonly class BookingService
          * - отправить письмо с ваучером клиенту на email
          * + отправить в букинг письмо о том, что заказ оформлен
          * + обработка ивентов по ошибкам
-         * - удалить прайс
-         * - пометить заказ оплаченным
+         * + пометить заказ оплаченным
          * - сохранить ссылку на ваучер
-         * - передача услуг в комменте
-         * - проверить примечание
+         * + передача услуг в комменте
+         * + проверить примечание
          *
          */
     }
@@ -217,6 +227,8 @@ readonly class BookingService
             ];
         }
 
+        $tripBackendComment = $this->makeBackendComment(order: $order);
+
         $trips = [
             [
                 'entryId' => $order->priceId,
@@ -227,12 +239,51 @@ readonly class BookingService
                 'passengers' => $passengers,
                 'pickup' => $pickup,
                 'dropoff' => $dropoff,
+                'note' => $payload['driverComment'] ?? null,
+                'tripBackendComment' => $tripBackendComment,
             ]
         ];
 
         return [
             'trips' => $trips
         ];
+    }
+
+    /**
+     * Возвращает текст внутреннего комментария который уходит вместе с заказом.
+     * Внутри комментария указываются некоторые детали заказа и выбранные услуги
+     *
+     * @param OrderDTO $order
+     * @return string
+     */
+    private function makeBackendComment(OrderDTO $order): string {
+        $serviceLines = [];
+        $orderInfoLines = [];
+
+        $payload = $order->payload ?? [];
+
+        // информация об услугах
+        foreach($payload['services'] ?? [] as $service) {
+            $serviceDTO = $this->serviceManager->fetchById(id: $service['id']);
+
+            if ($serviceDTO) {
+                $servicePrice = $serviceDTO->price;
+                $serviceFullPrice = $service['quantity'] * $serviceDTO->price;
+                $serviceLines[] = "👉 {$serviceDTO->title} x {$service['quantity']} = {$servicePrice} * {$service['quantity']} = {$serviceFullPrice} {$serviceDTO->currency}";
+            }
+        }
+
+        // информация о заказе
+        $paidSum = $order->isRefundable ? $order->prices->fullPriceRefundable : $order->prices->fullPrice;
+        $ticketType = $order->isRefundable ? 'Возвратный' : 'Не возвратный';
+        $orderInfoLines[] = "Заказ: {$order->orderId}";
+        $orderInfoLines[] = "Полная стоимость: {$paidSum} RUB";
+        $orderInfoLines[] = "Оплачено: {$paidSum} RUB";
+        $orderInfoLines[] = "Тип билета: {$ticketType}";
+        $orderInfoLines[] = "E-mail для уведомлений: {$order->notificationEmail}";
+        $orderInfoLines[] = "--------------------";
+
+        return implode("\n", $orderInfoLines) . "\n" . implode("\n", $serviceLines);
     }
 
     /**

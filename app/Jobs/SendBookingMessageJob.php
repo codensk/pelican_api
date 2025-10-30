@@ -20,15 +20,17 @@ class SendBookingMessageJob implements ShouldQueue
 
     public int $tries = 3;
     public string $email;
+    public string $subject;
     public string $messageText;
-    public array $orderDetails;
+    public OrderDTO $orderDTO;
     public MailService $mailService;
 
-    public function __construct(string $email, string $messageText, array $orderDetails)
+    public function __construct(string $email, string $subject, string $messageText, OrderDTO $orderDTO)
     {
         $this->email = $email;
+        $this->subject = $subject;
         $this->messageText = $messageText;
-        $this->orderDetails = $orderDetails;
+        $this->orderDTO = $orderDTO;
         $this->mailService = app(MailService::class);
     }
 
@@ -39,10 +41,11 @@ class SendBookingMessageJob implements ShouldQueue
         }
 
         try {
-            $this->mailService::sendNotificationOnSuccessPayment(
+            $this->mailService::sendBookingMessage(
                 to: $this->email,
-                subject: "💸 Заказ успешно оплачен",
-                orderId: $this->orderDetails['orderId'],
+                subject: $this->subject,
+                messageText: $this->messageText,
+                orderDTO: $this->orderDTO
             );
         } catch (Exception $exception) {
             $this->release(10);

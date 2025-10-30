@@ -49,6 +49,32 @@ class ServiceManager
     }
 
     /**
+     * Возвращает услугу по ее ID
+     *
+     * @param int|null $id
+     * @return ServiceDTO|null
+     */
+    public function fetchById(?int $id): ?ServiceDTO {
+        if (!$id) {
+            return null;
+        }
+
+        $service = Service::query()->where("service_id", $id)->first();
+
+        if ($service) {
+            return ServiceDTO::fromArray(data: [
+                "id" => $service->service_id,
+                "title" => $service->title,
+                "description" => $service->description,
+                "price" => $service->price,
+                "currency" => $service->currency,
+            ]);
+        }
+
+        return null;
+    }
+
+    /**
      * Сохраняем услуги для последующего расчета стоимостей
      *
      * @param array $services

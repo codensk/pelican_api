@@ -28,6 +28,10 @@ class Order extends Model
         return $this->hasOne(User::class, 'id', 'user_id');
     }
 
+    public function markAsPaid(): void {
+        $this->update(['is_paid' => true]);
+    }
+
     public function toDto(): OrderDTO {
         return OrderDTO::fromArray(data: [
             'userId' => $this->user_id,
