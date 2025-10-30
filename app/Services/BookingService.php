@@ -9,6 +9,8 @@ use App\Events\OrderBookingFailedEvent;
 use App\Events\OrderBookingSuccessEvent;
 use App\Events\OrderCreatedEvent;
 use App\Events\OrderSendFailedEvent;
+use App\Jobs\SendVoucherJob;
+use App\Mail\SendVoucher;
 use App\Models\Order;
 use App\Models\PriceHistory;
 use App\Models\Service;
@@ -29,6 +31,7 @@ readonly class BookingService
         private PaymentService $paymentService,
         private ServiceManager $serviceManager,
         private VoucherGeneratorService $voucherGeneratorService,
+        private MailService $mailService,
     ) {}
 
     /**
@@ -187,9 +190,7 @@ readonly class BookingService
     }
 
     public function sendVoucher(OrderDTO $order): void {
-        $documentPath = $this->voucherGeneratorService->generateDoc(order: $order);
-
-        dd(Storage::url($documentPath));
+        dispatch(job: new SendVoucherJob(email: $order->notificationEmail, orderDTO: $order));
     }
 
     private function prepareTripsPayload(OrderDTO $order, ?int $employeeId): array {

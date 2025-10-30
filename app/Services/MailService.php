@@ -7,6 +7,7 @@ use App\Mail\BookingMessage;
 use App\Mail\NotificationOnSuccessPayment;
 use App\Mail\PasswordOnRegister;
 use App\Mail\PaymentLinkOnOrderCreated;
+use App\Mail\SendVoucher;
 use Illuminate\Support\Facades\Mail;
 
 class MailService
@@ -29,5 +30,10 @@ class MailService
     public static function sendBookingMessage(string $to, string $subject, string $messageText, OrderDTO $orderDTO): void {
         Mail::to($to)
             ->send(new BookingMessage(messageSubject: $subject, messageText: $messageText, orderDTO: $orderDTO));
+    }
+
+    public static function sendVoucher(string $to, string $subject, string $orderId, string $voucher): void {
+        Mail::to($to)
+            ->send(new SendVoucher(messageSubject: $subject, orderId: $orderId, voucher: $voucher));
     }
 }

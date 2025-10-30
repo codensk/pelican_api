@@ -92,6 +92,11 @@ class VoucherGeneratorService
             $pickupTime = Carbon::parse($pickupAt)->format('H:i');
         }
 
+        $servicesTable[] = [
+            'serviceName' => "Трансфер",
+            'servicePrice' => $order->prices->tripPrice,
+        ];
+
         foreach($order->payload['services'] ?? [] as $service) {
             $serviceDTO = $serviceManager->fetchById(id: $service['id']);
 
@@ -127,5 +132,52 @@ class VoucherGeneratorService
         }
 
         return $templateProcessor;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function convertDocxToPdf(string $orderId, string $docxPath): string
+    {
+        if (!file_exists($docxPath)) {
+            throw new \Exception("DOCX файл не найден: $docxPath");
+        }
+
+        // Временный каталог для конвертации
+        $tmpDir = storage_path('app/public/tmp/convert_' . uniqid());
+        if (!is_dir($tmpDir)) {
+            mkdir($tmpDir, 0777, true);
+        }
+
+        // Выполняем конвертацию
+        $cmd = sprintf(
+            'soffice --headless --convert-to pdf:writer_pdf_Export:ReduceImageTransparency=false %s --outdir %s 2>&1',
+            escapeshellarg($docxPath),
+            escapeshellarg($tmpDir)
+        );
+
+        exec($cmd, $output, $returnCode);
+
+        if ($returnCode !== 0) {
+            throw new \Exception("Ошибка при конвертации DOCX → PDF: " . implode("\n", $output));
+        }
+
+        // Ищем готовый PDF
+        $pdfFile = preg_replace('/\.docx$/i', '.pdf', basename($docxPath));
+        $pdfFullPath = $tmpDir . DIRECTORY_SEPARATOR . $pdfFile;
+
+        if (!file_exists($pdfFullPath)) {
+            throw new \Exception("Не найден PDF после конвертации: $pdfFullPath");
+        }
+
+        // Загружаем в Laravel Storage (по умолчанию диск public)
+        $pdfStoragePath = 'vouchers/' . $orderId. '/' . $pdfFile;
+        Storage::put($pdfStoragePath, file_get_contents($pdfFullPath));
+
+        // Чистим временные файлы
+        @unlink($pdfFullPath);
+        @rmdir($tmpDir);
+
+        return $pdfStoragePath;
     }
 }
