@@ -18,7 +18,7 @@ class PaymentController extends Controller
 
     public function success(Request $request)
     {
-        $testOrderId = "PN-AcotmAr9cx";
+        $testOrderId = "PN-3010202519";
 
         event(new OrderSuccessPaidEvent(orderId: $testOrderId));
 
@@ -27,7 +27,7 @@ class PaymentController extends Controller
 
     public function failed(Request $request)
     {
-        $testOrderId = "PN-AcotmAr9cx";
+        $testOrderId = "PN-3010202519";
 
         event(new OrderUnsuccessfulPaidEvent(orderId: $testOrderId));
     }

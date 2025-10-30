@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Storage;
 
 readonly class BookingService
 {
@@ -27,6 +28,7 @@ readonly class BookingService
         private PriceHistoryService $priceHistoryService,
         private PaymentService $paymentService,
         private ServiceManager $serviceManager,
+        private VoucherGeneratorService $voucherGeneratorService,
     ) {}
 
     /**
@@ -53,13 +55,14 @@ readonly class BookingService
         $orderPrice = $this->calcPrice(bookingRequestDTO: $bookingRequestDTO, refundableTicketPercent: $clientData['refundableTicketPercent']);
         $priceHistoryRow = $this->priceHistoryService->fetchById(priceId: $bookingRequestDTO->priceId);
 
-        $orderId = Str::random(length: 10);
+        $orderId = date("dmY") . Order::query()->count() + 1;
         $payload = $bookingRequestDTO->toArray();
 
         $order = Order::query()->create([
             'user_id' => $userId,
             'notification_email' => $this->getNotificationEmail(userId: $userId, orderPayload: $payload),
             'price_id' => $bookingRequestDTO->priceId,
+            'vehicle_class_id' => $priceHistoryRow->price['vehicleClassId'] ?? null,
             'full_price' => $orderPrice->fullPrice,
             'full_price_refundable' => $orderPrice->fullPriceRefundable,
             'order_price' => $orderPrice->tripPrice,
@@ -77,6 +80,7 @@ readonly class BookingService
             'userId' => $order->user_id,
             'notificationEmail' => $order->notification_email,
             'priceId' => $order->price_id,
+            'vehicleClassId' => $order->vehicle_class_id,
             'orderId' => $order->order_id,
             'payload' => $order->payload ?? [],
             'pricePayload' => $priceHistoryRow->payload ?? null,
@@ -85,6 +89,7 @@ readonly class BookingService
             'isRefundable' => $order->is_refundable,
             'refundableTicketPercent' => $order->refundable_ticket_percent,
             'prices' => $orderPrice->toArray(),
+            'createdAt' => $order->created_at,
         ]);
 
         event(new OrderCreatedEvent(orderDTO: $orderDto));
@@ -179,6 +184,12 @@ readonly class BookingService
          * + проверить примечание
          *
          */
+    }
+
+    public function sendVoucher(OrderDTO $order): void {
+        $documentPath = $this->voucherGeneratorService->generateDoc(order: $order);
+
+        dd(Storage::url($documentPath));
     }
 
     private function prepareTripsPayload(OrderDTO $order, ?int $employeeId): array {
