@@ -38,90 +38,20 @@ class VoucherGeneratorService
     }
 
     private function fillWordDocument(TemplateProcessor $templateProcessor, OrderDTO $order): TemplateProcessor {
-        $serviceManager = app(ServiceManager::class);
-
-        $pricePayload = $order->pricePayload;
-
-        $pickupLocation = [];
-        $dropoffLocation = [];
-        $pickupAt = $pricePayload['pickupAt'] ?? null;
-        $pickupDate = null;
-        $pickupTime = null;
-        $passengerName = [];
-        $passengerPhones = [];
-        $servicesTable = [];
-
-        if ($pricePayload['pickupLocation']['name'] ?? false) {
-            $pickupLocation[] = $pricePayload['pickupLocation']['name'];
-        }
-
-        if ($pricePayload['pickupLocation']['address'] ?? false) {
-            $pickupLocation[] = $pricePayload['pickupLocation']['address'];
-        }
-
-        if ($pricePayload['dropoffLocation']['name'] ?? false) {
-            $dropoffLocation[] = $pricePayload['dropoffLocation']['name'];
-        }
-
-        if ($pricePayload['dropoffLocation']['address'] ?? false) {
-            $dropoffLocation[] = $pricePayload['dropoffLocation']['address'];
-        }
-
-        if ($order->payload['passenger'] ?? false) {
-            if ($order->payload['passenger']['firstName'] ?? false) {
-                $passengerName[] = $order->payload['passenger']['firstName'];
-            }
-
-            if ($order->payload['passenger']['lastName'] ?? false) {
-                $passengerName[] = $order->payload['passenger']['lastName'];
-            }
-        }
-
-        if ($order->payload['passenger'] ?? false) {
-            if ($order->payload['passenger']['phone'] ?? false) {
-                $passengerPhones[] = $order->payload['passenger']['phone'];
-            }
-
-            if ($order->payload['passenger']['secondaryPhone'] ?? false) {
-                $passengerPhones[] = $order->payload['passenger']['secondaryPhone'];
-            }
-        }
-
-        if ($pickupAt) {
-            $pickupDate = Carbon::parse($pickupAt)->format('d.m.Y');
-            $pickupTime = Carbon::parse($pickupAt)->format('H:i');
-        }
-
-        $servicesTable[] = [
-            'serviceName' => "Трансфер",
-            'servicePrice' => $order->prices->tripPrice,
-        ];
-
-        foreach($order->payload['services'] ?? [] as $service) {
-            $serviceDTO = $serviceManager->fetchById(id: $service['id']);
-
-            if ($serviceDTO) {
-                $serviceFullPrice = $service['quantity'] * $serviceDTO->price;
-
-                $servicesTable[] = [
-                    'serviceName' => $serviceDTO->title,
-                    'servicePrice' => $serviceFullPrice,
-                ];
-            }
-        }
+        $servicesTable = $order->getServicePrices();
 
         $templateProcessor->setValue("orderId", $order->orderId);
         $templateProcessor->setValue("orderAt", $order->createdAt->format('d.m.Y'));
-        $templateProcessor->setValue("carClassName", VehicleClassEnum::byId(id: $order->vehicleClassId)?->value ?? "");
-        $templateProcessor->setValue("pickupLocation", implode(", ", $pickupLocation));
-        $templateProcessor->setValue("dropoffLocation", implode(", ", $dropoffLocation));
-        $templateProcessor->setValue("pickupDate", $pickupDate);
-        $templateProcessor->setValue("pickupTime", $pickupTime);
-        $templateProcessor->setValue("passengerName", implode(" ", $passengerName));
-        $templateProcessor->setValue("totalPassengers", $order->payload['passenger']['numberOfPassengers'] ?? 1);
-        $templateProcessor->setValue("passengerPhones", implode(", ", $passengerPhones));
-        $templateProcessor->setValue("passengerEmail", $order->payload['passenger']['email'] ?? "");
-        $templateProcessor->setValue("driverComment", $order->payload['driverComment'] ?? "");
+        $templateProcessor->setValue("carClassName", $order->getCarClassName());
+        $templateProcessor->setValue("pickupLocation", $order->getPickupLocation());
+        $templateProcessor->setValue("dropoffLocation", $order->getDropoffLocation());
+        $templateProcessor->setValue("pickupDate", $order->getPickupDate());
+        $templateProcessor->setValue("pickupTime", $order->getPickupTime());
+        $templateProcessor->setValue("passengerName", $order->getPassengerName());
+        $templateProcessor->setValue("totalPassengers", $order->getNumberOfPassengers());
+        $templateProcessor->setValue("passengerPhones", $order->getPassengerPhone());
+        $templateProcessor->setValue("passengerEmail", $order->getPassengerEmail());
+        $templateProcessor->setValue("driverComment", $order->getDriverComment());
         $templateProcessor->setValue("fullPrice", $order->prices->fullPrice);
         $templateProcessor->setValue("fullPriceRefundable", $order->isRefundable ? $order->prices->fullPriceRefundable : "-");
 

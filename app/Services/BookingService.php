@@ -30,8 +30,6 @@ readonly class BookingService
         private PriceHistoryService $priceHistoryService,
         private PaymentService $paymentService,
         private ServiceManager $serviceManager,
-        private VoucherGeneratorService $voucherGeneratorService,
-        private MailService $mailService,
     ) {}
 
     /**
@@ -63,6 +61,7 @@ readonly class BookingService
 
         $order = Order::query()->create([
             'user_id' => $userId,
+            'code' => "pn" . Str::random(98),
             'notification_email' => $this->getNotificationEmail(userId: $userId, orderPayload: $payload),
             'price_id' => $bookingRequestDTO->priceId,
             'vehicle_class_id' => $priceHistoryRow->price['vehicleClassId'] ?? null,
@@ -81,6 +80,7 @@ readonly class BookingService
 
         $orderDto = OrderDTO::fromArray(data: [
             'userId' => $order->user_id,
+            'code' => $order->code,
             'notificationEmail' => $order->notification_email,
             'priceId' => $order->price_id,
             'vehicleClassId' => $order->vehicle_class_id,
