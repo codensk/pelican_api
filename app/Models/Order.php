@@ -14,7 +14,7 @@ class Order extends Model
         'order_price', 'services_price', 'order_id', 'payment_link',
         'is_paid', 'payload', 'full_price_refundable', 'is_refundable',
         'refundable_ticket_percent', 'expires_at', 'price_payload',
-        'vehicle_class_id'
+        'vehicle_class_id', 'code'
     ];
 
     protected $casts = [
@@ -36,6 +36,7 @@ class Order extends Model
     public function toDto(): OrderDTO {
         return OrderDTO::fromArray(data: [
             'userId' => $this->user_id,
+            'code' => $this->code,
             'notificationEmail' => $this->notification_email,
             'vehicleClassId' => $this->vehicle_class_id,
             'priceId' => $this->price_id,

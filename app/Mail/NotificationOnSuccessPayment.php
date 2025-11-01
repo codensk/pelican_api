@@ -16,14 +16,16 @@ class NotificationOnSuccessPayment extends Mailable
 
     public string $messageSubject;
     public string $orderId;
+    public string $orderCode;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(string $messageSubject, string $orderId)
+    public function __construct(string $messageSubject, string $orderId, string $orderCode)
     {
         $this->messageSubject = $messageSubject;
         $this->orderId = $orderId;
+        $this->orderCode = $orderCode;
     }
 
     /**

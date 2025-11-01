@@ -51,6 +51,7 @@ class SendVoucherJob implements ShouldQueue
                 subject: "✅ Заказ успешно забронирован",
                 orderId: $this->orderDTO->orderId,
                 voucher: $pdfPath,
+                orderCode: $this->orderDTO->code
             );
         } catch (Exception $exception) {
             Log::error($exception->getMessage());

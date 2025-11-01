@@ -22,9 +22,9 @@ class MailService
             ->send(new PaymentLinkOnOrderCreated(messageSubject: $subject, orderId: $orderId, link: $link, expiresAt: $expiresAt));
     }
 
-    public static function sendNotificationOnSuccessPayment(string $to, string $subject, string $orderId): void {
+    public static function sendNotificationOnSuccessPayment(string $to, string $subject, string $orderId, string $orderCode): void {
         Mail::to($to)
-            ->send(new NotificationOnSuccessPayment(messageSubject: $subject, orderId: $orderId));
+            ->send(new NotificationOnSuccessPayment(messageSubject: $subject, orderId: $orderId, orderCode: $orderCode));
     }
 
     public static function sendBookingMessage(string $to, string $subject, string $messageText, OrderDTO $orderDTO): void {
@@ -32,8 +32,8 @@ class MailService
             ->send(new BookingMessage(messageSubject: $subject, messageText: $messageText, orderDTO: $orderDTO));
     }
 
-    public static function sendVoucher(string $to, string $subject, string $orderId, string $voucher): void {
+    public static function sendVoucher(string $to, string $subject, string $orderId, string $voucher, string $orderCode): void {
         Mail::to($to)
-            ->send(new SendVoucher(messageSubject: $subject, orderId: $orderId, voucher: $voucher));
+            ->send(new SendVoucher(messageSubject: $subject, orderId: $orderId, voucher: $voucher, orderCode: $orderCode));
     }
 }

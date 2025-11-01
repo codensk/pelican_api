@@ -1,0 +1,54 @@
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+h5 {
+    font-size: 18px !important;
+}
+
+.order-page {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card {
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    padding: 6px 6px 12px;
+    border-radius: 5px;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.route {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-left: 10px;
+}
+
+.route .route-point {
+    background: #f8f9fa;
+    padding: 10px 15px;
+    border-radius: 12px;
+    width: 100%;
+}
+
+.route .route-arrow {
+    font-size: 1.5rem;
+    /*align-self: center;*/
+    color: #0d6efd;
+}
+
+.text-decoration-none {
+    text-decoration: none;
+}
+
+.border-top-2 {
+    border-top: 2px solid #6e6e6e !important;
+}

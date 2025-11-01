@@ -6,6 +6,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/order/{orderId}', [App\Http\Controllers\OrderController::class, 'show'])->name('order.show');
+
 Auth::routes([
     'register' => false,
     'verify' => false,

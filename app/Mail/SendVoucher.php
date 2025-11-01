@@ -19,15 +19,17 @@ class SendVoucher extends Mailable
     public string $messageSubject;
     public string $orderId;
     public string $voucher;
+    public string $orderCode;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(string $messageSubject, string $orderId, string $voucher)
+    public function __construct(string $messageSubject, string $orderId, string $voucher, string $orderCode)
     {
         $this->messageSubject = $messageSubject;
         $this->orderId = $orderId;
         $this->voucher = $voucher;
+        $this->orderCode = $orderCode;
     }
 
     /**

@@ -41,6 +41,7 @@ class SendNotificationOnSuccessPaymentJob implements ShouldQueue
                 to: $this->email,
                 subject: "💸 Заказ успешно оплачен",
                 orderId: $this->orderDTO->orderId,
+                orderCode: $this->orderDTO->code
             );
         } catch (Exception $exception) {
             $this->release(10);
