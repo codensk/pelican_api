@@ -55,6 +55,20 @@ class VoucherGeneratorService
         $templateProcessor->setValue("fullPrice", $order->prices->fullPrice);
         $templateProcessor->setValue("fullPriceRefundable", $order->isRefundable ? $order->prices->fullPriceRefundable : "-");
 
+        $additionalStopRows = [];
+        foreach($order->additionalStops ?? [] as $additionalStop) {
+            $additionalStopRows[] = [
+                'additionalStopAddress' => $additionalStop['address'],
+                'additionalStopComment' => $additionalStop['comment'] ?? "",
+            ];
+        }
+
+        try {
+            $templateProcessor->cloneRowAndSetValues("additionalStopAddress", $additionalStopRows);
+        } catch (\Exception $err) {
+
+        }
+
         try {
             $templateProcessor->cloneRowAndSetValues("serviceName", $servicesTable);
         } catch (\Exception $err) {

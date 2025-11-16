@@ -34,6 +34,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('services')->group(function () {
         Route::controller(ServiceController::class)->group(function () {
             Route::get('/', 'list')->name('services.list');
+            Route::get('/checkAdditionalStopAvailability', 'checkAdditionalStopAvailability')->name('services.checkAdditionalStopAvailability');
         });
     });
 
