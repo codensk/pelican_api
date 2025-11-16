@@ -14,7 +14,7 @@ class Order extends Model
         'order_price', 'services_price', 'order_id', 'payment_link',
         'is_paid', 'payload', 'full_price_refundable', 'is_refundable',
         'refundable_ticket_percent', 'expires_at', 'price_payload',
-        'vehicle_class_id', 'code'
+        'vehicle_class_id', 'code', 'additional_stops'
     ];
 
     protected $casts = [
@@ -22,6 +22,7 @@ class Order extends Model
         'is_paid' => 'boolean',
         'payload' => 'array',
         'price_payload' => 'array',
+        'additional_stops' => 'array',
         'expires_at' => 'timestamp',
     ];
 
@@ -45,6 +46,7 @@ class Order extends Model
             'pricePayload' => $this->price_payload ?? [],
             'isPaid' => $this->is_paid,
             'paymentLink' => $this->payment_link,
+            'additionalStops' => $this->additional_stops ?? [],
             'expiresAt' => Carbon::parse($this->expires_at),
             'refundableTicketPercent' => $this->refundable_ticket_percent,
             'isRefundable' => $this->is_refundable,
