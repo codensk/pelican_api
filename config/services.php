@@ -45,6 +45,7 @@ return [
             'priceEndpoint' => 'https://release.busfer.com/api/v1/prices',
             'placeEndpoint' => 'https://release.busfer.com/api/v1/findPlace',
             'servicesEndpoint' => 'https://release.busfer.com/api/pelican/services',
+            'additionalStopCheckEndpoint' => 'https://release.busfer.com/api/pelican/additionalAddressCheck',
             'clientTokenEndpoint' => 'https://release.busfer.com/api/pelican/clientToken',
             'tripEndpoint' => 'https://release.busfer.com/api/v1/trips',
         ]

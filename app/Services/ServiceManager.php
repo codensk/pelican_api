@@ -7,6 +7,7 @@ use App\DTO\PlaceRequestDTO;
 use App\DTO\ServiceDTO;
 use App\Exceptions\CustomValidationException;
 use App\Models\Service;
+use Cache;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
@@ -46,6 +47,42 @@ class ServiceManager
                 "quantity" => $service['quantity'] ?? null,
             ]);
         }, array: $json);
+    }
+
+    /**
+     * Проверяет возможность дополнительного заезда по указанным координатам
+     *
+     * @throws CustomValidationException|ConnectionException
+     */
+    public function checkAdditionalStopRequest(string $token, ?string $lat, ?string $lon, ?string $pickupLat, ?string $pickupLon, ?string $dropoffLat, ?string $dropoffLon): bool {
+        $cacheKey = "additional_stop.{$lat}.{$lon}.{$pickupLat}.{$pickupLon}.{$dropoffLat}.{$dropoffLon}";
+
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
+
+        $req = Http::retry(times: 3, sleepMilliseconds: 100, throw: false)
+            ->timeout(seconds: 60)
+            ->withToken(token: $token)
+            ->withUrlParameters(parameters: [
+                'endpoint' => config("services.booking.endpoints.additionalStopCheckEndpoint"),
+                'lat' => $lat,
+                'lon' => $lon,
+                'pickupLat' => $pickupLat,
+                'pickupLon' => $pickupLon,
+                'dropoffLat' => $dropoffLat,
+                'dropoffLon' => $dropoffLon,
+            ])->get('{+endpoint}?lat={lat}&lon={lon}&pickupLat={pickupLat}&pickupLon={pickupLon}&dropoffLat={dropoffLat}&dropoffLon={dropoffLon}');
+
+        $json = $req->json();
+
+        if ($json['errors'] ?? false) {
+            throw new CustomValidationException(message: $json['errors'][0]);
+        }
+
+        Cache::put($cacheKey, $json['isAllowed'] ?? false, now()->addHours(24));
+
+        return $json['isAllowed'] ?? false;
     }
 
     /**

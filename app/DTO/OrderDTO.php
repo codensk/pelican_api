@@ -18,6 +18,7 @@ class OrderDTO
         public string $orderId,
         public float $refundableTicketPercent,
         public array $payload,
+        public ?array $additionalStops = [],
         public array $pricePayload,
         public ?string $paymentLink,
         public Carbon $expiresAt,
@@ -37,6 +38,7 @@ class OrderDTO
             'vehicleClassId' => $this->vehicleClassId,
             'orderId' => $this->orderId,
             'payload' => $this->payload,
+            'additionalStops' => $this->additionalStops ?? [],
             'pricePayload' => $this->pricePayload,
             'isPaid' => $this->isPaid,
             'paymentLink' => $this->paymentLink,
@@ -59,6 +61,7 @@ class OrderDTO
             orderId: $data['orderId'],
             refundableTicketPercent: $data['refundableTicketPercent'],
             payload: $data['payload'],
+            additionalStops: $data['additionalStops'] ?? [],
             pricePayload: $data['pricePayload'],
             paymentLink: $data['paymentLink'] ?? null,
             expiresAt: ($data['expiresAt'] ?? null) ? Carbon::parse($data['expiresAt']) : null,
@@ -189,5 +192,9 @@ class OrderDTO
         }
 
         return $servicesTable;
+    }
+
+    public function getAdditionalStops(): array {
+        return $this->additionalStops;
     }
 }
