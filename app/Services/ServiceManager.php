@@ -18,14 +18,15 @@ class ServiceManager
      *
      * @throws CustomValidationException|ConnectionException
      */
-    public function fetchServices(string $token, int $cityId): array {
+    public function fetchServices(string $token, string $lat, string $lon): array {
         $req = Http::retry(times: 3, sleepMilliseconds: 100, throw: false)
             ->timeout(seconds: 60)
             ->withToken(token: $token)
             ->withUrlParameters(parameters: [
                 'endpoint' => config("services.booking.endpoints.servicesEndpoint"),
-                'cityId' => $cityId,
-            ])->get('{+endpoint}?cityId={cityId}');
+                'lat' => $lat,
+                'lon' => $lon,
+            ])->get('{+endpoint}?lat={lat}&lon={lon}');
 
         $json = $req->json();
 

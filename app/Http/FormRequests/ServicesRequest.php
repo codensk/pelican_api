@@ -10,14 +10,17 @@ class ServicesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'cityId' => 'required',
+//            'cityId' => 'required',
+            'lat' => 'required',
+            'lon' => 'required',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'cityId.required' => __('Не указан ID населенного пункта'),
+            'lat.required' => __('Укажите координаты места подачи (широту)'),
+            'lon.required' => __('Укажите координаты места подачи (долготу)'),
         ];
     }
 
