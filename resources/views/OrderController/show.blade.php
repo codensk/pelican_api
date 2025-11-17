@@ -39,6 +39,28 @@
             </div>
         </div>
 
+        @if (count($order->payload['additionalStops'] ?? []) > 0)
+                <div class="card shadow-sm border-0 rounded-4 mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title text-secondary mb-3">📍 Дополнительные заезды</h5>
+                        <div class="route">
+                            @foreach($order->payload['additionalStops'] ?? [] as $additionalStop)
+                                <div class="route-point">
+                                    <p>
+                                        {{ $additionalStop['address'] }}
+
+                                        @if ($additionalStop['comment'])
+                                             ({{ $additionalStop['comment'] }})
+                                        @endif
+                                    </p>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+        @endif
+
         <div class="card shadow-sm border-0 rounded-4 mb-4">
             <div class="card-body">
                 <h5 class="card-title text-secondary mb-3">👤 Пассажир</h5>

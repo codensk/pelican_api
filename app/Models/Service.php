@@ -8,7 +8,8 @@ class Service extends Model
 {
     public $fillable = [
         'service_id', 'title', 'description',
-        'price', 'currency', 'is_countable'
+        'price', 'currency', 'is_countable',
+        'service_code'
     ];
 
     protected $casts = [

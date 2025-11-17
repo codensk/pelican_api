@@ -5,6 +5,7 @@ namespace App\Services;
 use App\DTO\BookingRequestDTO;
 use App\DTO\OrderDTO;
 use App\DTO\OrderPriceDTO;
+use App\DTO\ServiceDTO;
 use App\Events\OrderBookingFailedEvent;
 use App\Events\OrderBookingSuccessEvent;
 use App\Events\OrderCreatedEvent;
@@ -57,6 +58,9 @@ readonly class BookingService
         $priceHistoryRow = $this->priceHistoryService->fetchById(priceId: $bookingRequestDTO->priceId);
 
         $orderId = date("dmY") . Order::query()->count() + 1;
+
+        $bookingRequestDTO = $this->checkBookingRequest(bookingRequestDTO: $bookingRequestDTO);
+
         $payload = $bookingRequestDTO->toArray();
 
         $order = Order::query()->create([
@@ -100,6 +104,38 @@ readonly class BookingService
         event(new OrderCreatedEvent(orderDTO: $orderDto));
 
         return $orderDto;
+    }
+
+    /**
+     * Если указаны доп заезды, то нужно скорректировать в доп. услугах соответствующую услугу (количество), чтобы не было ситуации, когда, например, указан доп заезд один, а по факту в заказе их 3
+     *
+     * @param BookingRequestDTO $bookingRequestDTO
+     * @return BookingRequestDTO|null
+     */
+    public function checkBookingRequest(BookingRequestDTO $bookingRequestDTO): ?BookingRequestDTO {
+        $found = false;
+
+        $additionalStopsCount = count($bookingRequestDTO->additionalStops);
+
+        foreach ($bookingRequestDTO->services ?? [] as $idx => $service) {
+            if ($service->serviceCode == 'additional_stop') {
+                $bookingRequestDTO->services[$idx]->quantity = $additionalStopsCount;
+                $found = true;
+                break;
+            }
+        }
+
+        // если не нашли - добавляем как новую услугу
+        if (!$found && $additionalStopsCount > 0) {
+            $service = Service::query()->where("service_code", "additional_stop")->first();
+
+            $bookingRequestDTO->services[] = ServiceDTO::fromArray(data: [
+                'id' => $service->id,
+                'quantity' => $additionalStopsCount,
+            ]);
+        }
+
+        return $bookingRequestDTO;
     }
 
     public function calcPrice(BookingRequestDTO $bookingRequestDTO, ?float $refundableTicketPercent = 0): OrderPriceDTO {
