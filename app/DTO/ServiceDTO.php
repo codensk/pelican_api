@@ -12,6 +12,7 @@ class ServiceDTO
         public ?string $description,
         public ?float $price,
         public ?string $group, // группа услуг (обычная услуга или услуга связи)
+        public ?string $serviceCode, // код услуги (чтобы различать)
         public ?string $currency, // валюта стоимости
         public ?bool $isCountable, // можно менять количество
         public int $quantity, // количество
@@ -26,6 +27,7 @@ class ServiceDTO
             'description' => $this->description,
             'price' => $this->price,
             'group' => $this->group,
+            'serviceCode' => $this->serviceCode,
             'currency' => $this->currency,
             'defaultState' => $this->defaultState,
             'isCountable' => $this->isCountable,
@@ -41,6 +43,7 @@ class ServiceDTO
             description: $data['description'] ?? null,
             price: $data['price'] ?? null,
             group: $data['group'] ?? null,
+            serviceCode: $data['serviceCode'] ?? null,
             currency: $data['currency'] ?? null,
             isCountable: $data['isCountable'] ?? null,
             quantity: $data['quantity'] ?? 1,

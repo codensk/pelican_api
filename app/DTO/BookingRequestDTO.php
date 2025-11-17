@@ -2,6 +2,7 @@
 
 namespace App\DTO;
 
+use App\Models\Service;
 use App\Services\Enums\TicketTypeEnum;
 
 class BookingRequestDTO
@@ -53,8 +54,17 @@ class BookingRequestDTO
         $services = [];
         $additionalStops = [];
 
-        foreach($data['services'] ?? [] as $service) {
-            $services[] = ServiceDTO::fromArray(data: $service);
+        foreach($data['services'] ?? [] as $serviceItem) {
+            $service = Service::query()->where("id", $serviceItem["id"])->first();
+            $serviceItem['serviceCode'] = $service->service_code ?? null;
+            $serviceItem['title'] = $service->title ?? null;
+            $serviceItem['description'] = $service->description ?? null;
+            $serviceItem['price'] = $service->price ?? null;
+            $serviceItem['group'] = $service->group ?? null;
+            $serviceItem['currency'] = $service->currency ?? null;
+            $serviceItem['isCountable'] = $service->is_countable ?? false;
+
+            $services[] = ServiceDTO::fromArray(data: $serviceItem);
         }
 
         foreach($data['additionalStops'] ?? [] as $additionalStop) {
