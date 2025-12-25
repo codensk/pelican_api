@@ -38,10 +38,12 @@ class SearchController extends Controller
     {
         $clientData = $this->clientTokenService->getClientData();
 
+        $currencyValue = $this->searchService->fetchCurrencyValue();
+
         // поиск цен
         $prices = $this->apiService->call(callback: fn() => $this->searchService->fetchPrices(
             PriceRequestDTO::fromArray(data: array_merge($request->validated(), ['token' => $clientData['token'], 'contractId' => $clientData['contractId']])),
-            refundableTicketPercent: $clientData['refundableTicketPercent'] ?? 0
+            refundableTicketPercent: $clientData['refundableTicketPercent'] ?? 0, usdCurrency: $currencyValue
         ), userId: Auth::guard('api')->user()->id ?? null);
 
         // сохраняем цены для временного хранения

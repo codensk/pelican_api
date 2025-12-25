@@ -112,7 +112,7 @@ class SearchService
      * @throws ConnectionException
      * @throws CustomValidationException
      */
-    public function fetchPrices(PriceRequestDTO $priceRequestDTO, ?float $refundableTicketPercent = 0): array {
+    public function fetchPrices(PriceRequestDTO $priceRequestDTO, ?float $refundableTicketPercent = 0, ?float $usdCurrency = null): array {
         $pickupAddress = $priceRequestDTO->pickupLocation->address;
         $dropoffAddress = $priceRequestDTO->dropoffLocation->address;
 
@@ -134,7 +134,6 @@ class SearchService
             ->timeout(seconds: 60)
             ->withToken(token: $priceRequestDTO->token)
             ->withUrlParameters(parameters: $payload)->get('{+endpoint}?tripTypeId={tripTypeId}&contractId={contractId}&pickupAt={pickupAt}&pickup[place][lat]={pickupLat}&pickup[place][lon]={pickupLon}&dropoff[place][lat]={dropoffLat}&dropoff[place][lon]={dropoffLon}&tollRoad={tollRoad}');
-//            ])->get('{+endpoint}?tripTypeId={tripTypeId}&contractId={contractId}&pickupAt={pickupAt}&pickup[place][address]={pickupLocation}&pickup[place][lat]={pickupLat}&pickup[place][lon]={pickupLon}&dropoff[place][address]={dropoffLocation}&dropoff[place][lat]={dropoffLat}&dropoff[place][lon]={dropoffLon}&tollRoad={tollRoad}');
 
         $json = $req->json();
 
@@ -142,7 +141,7 @@ class SearchService
             throw new CustomValidationException(message: $json['errors'][0]);
         }
 
-        $results = array_map(callback: function ($price) use ($refundableTicketPercent, $payload) {
+        $results = array_map(callback: function ($price) use ($refundableTicketPercent, $payload, $usdCurrency) {
             $ticketPrice = ($price['prices']['fullPrice'] ?? null) ? (double) $price['prices']['fullPrice'] : null;
             $priceRefundableTicket = $this->calcRefundableTicketPrice(ticketPrice: $ticketPrice ?? 0, refundableTicketPercent: $refundableTicketPercent);
 
@@ -158,11 +157,28 @@ class SearchService
                 "currency" => ($price['prices']['fullPrice'] ?? null) ? ($price['prices']['currency'] ?? null) : null,
                 "pickupPlaceTypeId" => $price['pickup']['polygons']['polygonTypeId'] ?? null,
                 "dropoffPlaceTypeId" => $price['dropoff']['polygons']['polygonTypeId'] ?? null,
+                "currencyUsdValue" => $usdCurrency,
             ]);
         }, array: $json);
 
         // Исключаем цены под запрос (в пеликане не нужны)
         return $this->excludePricesByRequest(prices: $results);
+    }
+
+    public function fetchCurrencyValue(): ?float {
+        if (Cache::has('currency.usd')) {
+            return Cache::get('currency.usd');
+        }
+
+        $req = Http::retry(times: 3, sleepMilliseconds: 100, throw: false)
+            ->timeout(seconds: 60)
+            ->get(config("services.booking.endpoints.currencyEndpoint"));
+
+        $json = $req->json();
+
+        Cache::set('currency.usd', $json['usd'] ?? null, now()->addHours(3));
+
+        return $json['usd'] ?? null;
     }
 
     public function calcRefundableTicketPrice(float $ticketPrice, float $refundableTicketPercent = 0): float {

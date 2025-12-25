@@ -14,8 +14,11 @@ class PriceResultDTO
         public ?string $duration,
         public ?float $price,
         public ?float $priceRefundableTicket,
+        public ?float $priceUsd,
+        public ?float $priceRefundableTicketUsd,
         public ?float $refundableTicketPercent,
         public ?string $currency, // RUB / USD / EUR
+        public ?float $currencyUsdValue,
         public ?PlaceTypeEnum $pickupPlaceType,
         public ?PlaceTypeEnum $dropoffPlaceType,
     ) {}
@@ -30,8 +33,11 @@ class PriceResultDTO
             'duration' => $this->duration,
             'price' => $this->price,
             'priceRefundableTicket' => $this->priceRefundableTicket,
+            'priceUsd' => $this->priceUsd,
+            'priceRefundableTicketUsd' => $this->priceRefundableTicketUsd,
             'refundableTicketPercent' => $this->refundableTicketPercent,
             'currency' => $this->currency,
+            'currencyUsdValue' => $this->currencyUsdValue,
             'pickupPlaceType' => $this->pickupPlaceType->value ?? null,
             'dropoffPlaceType' => $this->dropoffPlaceType->value ?? null,
         ];
@@ -39,16 +45,26 @@ class PriceResultDTO
 
     public static function fromArray(array $data): self
     {
+        $currencyUsdValue = $data['currencyUsdValue'] ?? null;
+        $priceRub = $data['price'] ?? null;
+        $priceRefundableTicketRub = $data['priceRefundableTicket'] ?? null;
+
+        $priceUsd = $priceRub > 0 && $currencyUsdValue > 0 ? round($priceRub / $currencyUsdValue, 2) : null;
+        $priceRefundableTicketUsd = $priceRub > 0 && $currencyUsdValue > 0 ? round($priceRefundableTicketRub / $currencyUsdValue, 2) : null;
+
         return new self(
             priceId: $data['priceId'],
             vehicleClassId: $data['vehicleClassId'],
             maxPassengers: $data['maxPassengers'],
             distance: $data['distance'],
             duration: $data['duration'],
-            price: $data['price'] ?? null,
-            priceRefundableTicket: $data['priceRefundableTicket'] ?? null,
+            price: $priceRub,
+            priceRefundableTicket: $priceRefundableTicketRub,
+            priceUsd: $priceUsd,
+            priceRefundableTicketUsd: $priceRefundableTicketUsd,
             refundableTicketPercent: $data['refundableTicketPercent'] ?? 0,
             currency: $data['currency'] ?? null,
+            currencyUsdValue: $data['currencyUsdValue'] ?? null,
             pickupPlaceType: ($data['pickupPlaceTypeId'] ?? null) ? PlaceTypeEnum::byId(id: $data['pickupPlaceTypeId'] ?? null) : null,
             dropoffPlaceType: ($data['dropoffPlaceTypeId'] ?? null) ? PlaceTypeEnum::byId(id: $data['dropoffPlaceTypeId'] ?? null) : null,
         );
