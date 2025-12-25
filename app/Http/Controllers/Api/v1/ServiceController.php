@@ -8,6 +8,7 @@ use App\Http\FormRequests\ServicesRequest;
 use App\Services\ApiResponse;
 use App\Services\ApiService;
 use App\Services\ClientTokenService;
+use App\Services\SearchService;
 use App\Services\ServiceManager;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,14 +18,19 @@ class ServiceController extends Controller
         private readonly ApiService $apiService,
         private readonly ClientTokenService $clientTokenService,
         private readonly ServiceManager $serviceManager,
+        private readonly SearchService $searchService,
     ) {}
 
     public function list(ServicesRequest $request)
     {
         $clientData = $this->clientTokenService->getClientData();
 
+        $currencyValue = $this->searchService->fetchCurrencyValue();
+
         // поиск мест
-        $services = $this->apiService->call(callback: fn() => $this->serviceManager->fetchServices(token: $clientData['token'], lat: $request->lat, lon: $request->lon, lang: $request->lang), userId: Auth::guard('api')->user()->id ?? null);
+        $services = $this->apiService->call(callback:
+            fn() => $this->serviceManager->fetchServices(token: $clientData['token'], lat: $request->lat, lon: $request->lon, lang: $request->lang, usdCurrency: $currencyValue),
+            userId: Auth::guard('api')->user()->id ?? null);
 
         return ApiResponse::success($services);
     }

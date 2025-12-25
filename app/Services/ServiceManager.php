@@ -18,7 +18,7 @@ class ServiceManager
      *
      * @throws CustomValidationException|ConnectionException
      */
-    public function fetchServices(string $token, string $lat, string $lon, ?string $lang = null): array {
+    public function fetchServices(string $token, string $lat, string $lon, ?string $lang = null, ?float $usdCurrency = null): array {
         $req = Http::retry(times: 3, sleepMilliseconds: 100, throw: false)
             ->timeout(seconds: 60)
             ->withToken(token: $token)
@@ -37,7 +37,7 @@ class ServiceManager
 
         $this->saveServices(services: $json);
 
-        return array_map(callback: function ($service) {
+        return array_map(callback: function ($service) use ($usdCurrency) {
             return ServiceDTO::fromArray([
                 "id" => $service['id'] ?? null,
                 "title" => $service['title'] ?? null,
@@ -48,6 +48,7 @@ class ServiceManager
                 "defaultState" => $service['isDefaultChecked'] ?? false,
                 "isCountable" => $service['isCountable'] ?? false,
                 "quantity" => $service['quantity'] ?? null,
+                "usdCurrency" => $usdCurrency,
             ]);
         }, array: $json);
     }
