@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['localhost:3000', 'http://localhost:3000', 'api.pelican.online', 'https://api.pelican.online', 'pelican.online', 'https://pelican.online'],
+    'allowed_origins' => ['online.pelican.online', 'http://online.pelican.online', 'https://online.pelican.online', 'localhost:3000', 'http://localhost:3000', 'api.pelican.online', 'https://api.pelican.online', 'pelican.online', 'https://pelican.online', 'localhost:5173', 'http://localhost:5173'],
 
     'allowed_origins_patterns' => [],
 

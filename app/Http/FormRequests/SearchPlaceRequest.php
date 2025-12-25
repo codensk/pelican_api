@@ -11,6 +11,7 @@ class SearchPlaceRequest extends FormRequest
     {
         return [
             'search' => 'required',
+            'lang' => 'nullable|string',
         ];
     }
 

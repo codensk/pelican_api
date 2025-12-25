@@ -10,6 +10,7 @@ class PlaceRequestDTO
     public function __construct(
         public string $token,
         public string $search,
+        public string $lang = "ru",
     ) {}
 
     public function toArray(): array
@@ -17,6 +18,7 @@ class PlaceRequestDTO
         return [
             'token' => $this->token,
             'search' => $this->search,
+            'lang' => $this->lang ?? 'ru',
         ];
     }
 
@@ -25,6 +27,7 @@ class PlaceRequestDTO
         return new self(
             token: $data['token'],
             search: $data['search'],
+            lang: $data['lang'] ?? 'ru',
         );
     }
 }

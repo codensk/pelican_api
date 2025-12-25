@@ -30,12 +30,12 @@ class PassengerDTO
     public static function fromArray(array $data): self
     {
         return new self(
-            firstName: $data['firstName'],
-            lastName: $data['lastName'],
-            phone: $data['phone'],
-            secondaryPhone: $data['secondaryPhone'],
-            email: $data['email'],
-            numberOfPassengers: $data['numberOfPassengers'],
+            firstName: $data['firstName'] ?? null,
+            lastName: $data['lastName'] ?? null,
+            phone: $data['phone'] ?? null,
+            secondaryPhone: $data['secondaryPhone'] ?? null,
+            email: $data['email'] ?? null,
+            numberOfPassengers: $data['numberOfPassengers'] ?? 1,
         );
     }
 }

@@ -28,7 +28,13 @@ class OrderValidator
             'ticketType.in' => __('Тип билета имеет недопустимое значение'),
         ]);
 
-        $priceRow = PriceHistory::query()->where('price_id', $data['priceId'])->first();
+        if (!($data['priceId'] ?? false)) {
+            $validator->after(function ($v) {
+                $v->errors()->add('priceId', 'Не передан ID прайса');
+            });
+        }
+
+        $priceRow = PriceHistory::query()->where('price_id', $data['priceId'] ?? "-")->first();
 
         if (!$priceRow) {
             $validator->after(function ($v) {

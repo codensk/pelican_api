@@ -83,12 +83,17 @@ class SearchService
             ->withUrlParameters(parameters: [
                 'endpoint' => config("services.booking.endpoints.placeEndpoint"),
                 'term' => $placeRequestDTO->search,
-            ])->get('{+endpoint}?term={term}');
+                'lang' => $placeRequestDTO->lang ?? 'ru',
+            ])->get('{+endpoint}?term={term}&lang={lang}');
 
         $json = $req->json();
 
         if ($json['errors'] ?? false) {
             throw new CustomValidationException(message: $json['errors'][0]);
+        }
+
+        if (!$json) {
+            throw new CustomValidationException(message: "Ничего не найдено");
         }
 
         return array_map(callback: function ($place) {

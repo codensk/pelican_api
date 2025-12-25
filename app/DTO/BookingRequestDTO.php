@@ -9,10 +9,10 @@ class BookingRequestDTO
 {
     public function __construct(
         public string $priceId,
-        public LocationDetailsDTO $pickupLocation,
-        public LocationDetailsDTO $dropoffLocation,
+        public ?LocationDetailsDTO $pickupLocation,
+        public ?LocationDetailsDTO $dropoffLocation,
 
-        public PassengerDTO $passenger,
+        public ?PassengerDTO $passenger,
         public ?string $driverComment,
         public ?string $plateText,
 
