@@ -24,7 +24,7 @@ class ServiceController extends Controller
         $clientData = $this->clientTokenService->getClientData();
 
         // поиск мест
-        $services = $this->apiService->call(callback: fn() => $this->serviceManager->fetchServices(token: $clientData['token'], lat: $request->lat, lon: $request->lon), userId: Auth::guard('api')->user()->id ?? null);
+        $services = $this->apiService->call(callback: fn() => $this->serviceManager->fetchServices(token: $clientData['token'], lat: $request->lat, lon: $request->lon, lang: $request->lang), userId: Auth::guard('api')->user()->id ?? null);
 
         return ApiResponse::success($services);
     }
